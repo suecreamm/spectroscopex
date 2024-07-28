@@ -13,11 +13,11 @@
 		$banner = $('#banner');
 
 	// Breakpoints.
+	// 	narrow:    [ '841px',   '980px'  ],
+	// narrower:  [ '737px',   '840px'  ],
 		breakpoints({
 			wide:      [ '1281px',  '1680px' ],
 			normal:    [ '981px',   '1280px' ],
-			narrow:    [ '841px',   '980px'  ],
-			narrower:  [ '737px',   '840px'  ],
 			mobile:    [ null,      '736px'  ]
 		});
 
@@ -70,6 +70,7 @@
 					target: $body,
 					visibleClass: 'navPanel-visible'
 				});
+				
 
 		// Fix: Remove navPanel transitions on WP<10 (poor/buggy performance).
 			if (browser.os == 'wp' && browser.osVersion < 10)

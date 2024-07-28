@@ -23,4 +23,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initially hide all content sections except the first one
     updateContentVisibility();
+
+    // Define the updateContentVisibility function to manage content visibility
+    function updateContentVisibility() {
+        const activeTab = document.querySelector('.tabs .tab.active');
+        const target = activeTab ? activeTab.getAttribute('data-content') : null;
+
+        const contents = document.querySelectorAll('.content');
+        contents.forEach(content => {
+            if (content.id === target) {
+                content.classList.add('active');
+            } else {
+                content.classList.remove('active');
+            }
+        });
+}
 });

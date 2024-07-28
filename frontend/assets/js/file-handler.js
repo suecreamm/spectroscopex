@@ -1,180 +1,70 @@
-let currentFileIndex = 0;
-let parsedData = [];
+// 파일 입력 변경 이벤트 핸들러
+document.getElementById('fileInput').addEventListener('change', async function(event) {
+  const files = event.target.files;
+  if (files.length === 0) {
+      console.error('No files selected');
+      return;
+  }
 
-// Handle CSV file upload
-document.getElementById('fileInput').addEventListener('change', function(event) {
-    const files = event.target.files;
-    if (files.length > 0) {
-        document.getElementById('uploadMessage').style.display = 'none';
-        document.getElementById('heatmapCanvas').style.height = '500px';
-        document.querySelector('.tab-action-buttons').style.display = 'flex';
-        currentFileIndex = 0;
-        parsedData = [];
+  const formData = new FormData();
+  for (const file of files) {
+      formData.append('filePaths', file, file.name);
+  }
 
-        Array.from(files).forEach((file, index) => {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const csv = e.target.result;
-                Papa.parse(csv, {
-                    header: false,
-                    dynamicTyping: true,
-                    complete: function(results) {
-                        parsedData.push({ data: results.data, name: file.name });
-                        if (index === 0) {
-                            updateView();
-                        }
-                    }
-                });
-            };
-            reader.readAsText(file);
-        });
+  try {
+      const response = await fetch('http://localhost:7654/upload-directory', {
+          method: 'POST',
+          body: formData,
+      });
 
-        // Initialize view after files are loaded
-        initializeViewAfterUpload();
-    } else {
-        document.getElementById('uploadMessage').style.display = 'block';
-        document.getElementById('heatmapCanvas').style.height = '0';
-        document.querySelector('.tab-action-buttons').style.display = 'none';
-    }
+      if (!response.ok) {
+          throw new Error(`Server error ${response.status}: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      const imageUrl = URL.createObjectURL(blob);
+
+      const previewElement = document.getElementById('previewImage');
+      previewElement.src = imageUrl;
+      previewElement.style.display = 'block'; // 이미지가 보이도록 설정
+
+      // 모든 탭과 콘텐츠 비활성화
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.content').forEach(content => {
+          content.classList.remove('active');
+          content.style.display = 'none'; // 모든 콘텐츠를 숨김
+      });
+
+      // Preview 및 View All 탭 활성화
+      const previewTab = document.querySelector('.tab[data-content="preview"]');
+      const previewContent = document.getElementById('preview');
+      const viewAllBtn = document.getElementById('viewAllBtn');
+
+      previewTab.classList.add('active');
+      previewContent.classList.add('active');
+      previewContent.style.display = 'block'; // 'preview' 콘텐츠를 보이도록 설정
+      viewAllBtn.classList.add('active');
+
+  } catch (error) {
+      console.error('Error sending file paths:', error);
+  }
 });
 
-// Update view mode (All or One) based on selected tab and button
-function updateView() {
-    const activeTab = document.querySelector('.tabs .tab.active').dataset.content;
-    const viewMode = document.querySelector('.tab-action-button.active').id;
+// 탭 클릭 이벤트 핸들러 추가
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', function() {
+      // 모든 탭과 콘텐츠 비활성화
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.content').forEach(content => {
+          content.classList.remove('active');
+          content.style.display = 'none';
+      });
 
-    if (activeTab === 'preview') {
-        if (viewMode === 'viewAllBtn') {
-            createHeatmap(parsedData);
-        } else if (viewMode === 'viewOneBtn') {
-            showSingleFile(currentFileIndex);
-        }
-    }
-}
-
-// Create heatmap for all data
-function createHeatmap(data) {
-    const heatmapData = data.map((file, index) => ({
-        z: file.data,
-        x: file.data.map((_, idx) => idx),
-        y: file.data[0].map((_, idx) => idx),
-        type: 'heatmap',
-        colorscale: 'Inferno',
-        name: file.name
-    }));
-
-    const layout = {
-        title: 'CSV Data Heatmap',
-        xaxis: { title: 'Index' },
-        yaxis: { title: 'Columns' }
-    };
-
-    Plotly.newPlot('heatmapCanvas', heatmapData, layout);
-}
-
-// Show single file heatmap
-function showSingleFile(index) {
-    const file = parsedData[index];
-    if (!file) return;
-
-    const xValues = file.data.map((_, idx) => idx);
-    const yValues = file.data[0].map((_, idx) => idx);
-    const zValues = file.data;
-
-    const heatmapData = [{
-        z: zValues,
-        x: xValues,
-        y: yValues,
-        type: 'heatmap',
-        colorscale: 'Inferno'
-    }];
-
-    const layout = {
-        title: `CSV Data Heatmap - File: ${file.name}`,
-        xaxis: { title: 'Index' },
-        yaxis: { title: 'Columns' }
-    };
-
-    Plotly.newPlot('heatmapCanvas', heatmapData, layout);
-
-    // Update navigation button visibility
-    updateButtonVisibility();
-}
-
-// Check if there are any uploaded files with data
-function hasFileData() {
-    return parsedData.length > 0;
-}
-
-// Update content visibility based on file data availability
-function updateContentVisibility() {
-    const contents = document.querySelectorAll('.content');
-    contents.forEach(content => {
-        if (hasFileData()) {
-            content.style.display = 'block';
-        } else {
-            content.style.display = 'none';
-        }
-    });
-
-    // Ensure the action buttons are visible
-    document.querySelectorAll('.tab-action-buttons').forEach(buttonGroup => {
-        buttonGroup.style.display = 'flex';
-    });
-}
-
-// Initialization after files are uploaded
-function initializeViewAfterUpload() {
-    updateView();
-    updateButtonVisibility();
-    updateContentVisibility();
-}
-
-// Navigation between files in "View One" mode
-document.getElementById('prevBtn').addEventListener('click', function() {
-    if (currentFileIndex > 0) {
-        currentFileIndex--;
-        showSingleFile(currentFileIndex);
-    }
-});
-
-document.getElementById('nextBtn').addEventListener('click', function() {
-    if (currentFileIndex < parsedData.length - 1) {
-        currentFileIndex++;
-        showSingleFile(currentFileIndex);
-    }
-});
-
-// Update the visibility of the navigation buttons
-function updateButtonVisibility() {
-    const viewMode = document.querySelector('.tab-action-button.active').id;
-    const navButtons = document.querySelector('.navigation-buttons');
-    const activeTab = document.querySelector('.tabs .tab.active').dataset.content;
-
-    if (activeTab === 'preview' && viewMode === 'viewOneBtn' && parsedData.length > 1) {
-        navButtons.style.display = 'flex';
-    } else {
-        navButtons.style.display = 'none';
-    }
-
-    if (activeTab === 'preview' && hasFileData()) {
-        document.querySelector('.tab-action-buttons').style.display = 'flex';
-    } else {
-        document.querySelector('.tab-action-buttons').style.display = 'none';
-    }
-}
-
-// Add click listeners to View All and View One buttons
-document.getElementById('viewAllBtn').addEventListener('click', function() {
-    document.getElementById('viewOneBtn').classList.remove('active');
-    this.classList.add('active');
-    updateView();
-    updateButtonVisibility();
-});
-
-document.getElementById('viewOneBtn').addEventListener('click', function() {
-    document.getElementById('viewAllBtn').classList.remove('active');
-    this.classList.add('active');
-    updateView();
-    updateButtonVisibility();
+      // 클릭된 탭 및 해당 콘텐츠 활성화
+      tab.classList.add('active');
+      const contentId = tab.getAttribute('data-content');
+      const content = document.getElementById(contentId);
+      content.classList.add('active');
+      content.style.display = 'block'; // 콘텐츠를 보이도록 설정
+  });
 });

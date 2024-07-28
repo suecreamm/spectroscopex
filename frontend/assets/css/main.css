@@ -1,4 +1,4 @@
-@import url("fontawesome.min.css");
+@import url("all.min.css");
 @import url("https://fonts.googleapis.com/css?family=Lato:300,400,900");
 
 
@@ -66,6 +66,8 @@ input, select, textarea {
 	-ms-appearance: none;
 	appearance: none;
 }
+
+
 
 /* Basic */
 
@@ -1891,7 +1893,7 @@ input, select, textarea {
 			text-rendering: auto;
 			line-height: 1;
 			text-transform: none !important;
-			font-family: 'Font Awesome 6 Free';
+			font-family: 'Font Awesome 5 Free';
 			font-weight: 400;
 		}
 
@@ -1904,7 +1906,7 @@ input, select, textarea {
 		}
 
 		.icon.brands:before {
-			font-family: 'Font Awesome 6 Brands';
+			font-family: 'Font Awesome 5 Brands';
 		}
 
 		.icon.circle {
@@ -1929,12 +1931,12 @@ input, select, textarea {
 				top: -0.2em;
 			}
 
-			.icon.circle.fa-twitter {
+			.icon.circle.fa-researchgate {
 				background: #70aecd;
 				color: #fff;
 			}
 
-				.icon.circle.fa-twitter:hover {
+				.icon.circle.fa-researchgate:hover {
 					background: #7fb7d2;
 				}
 
@@ -1947,55 +1949,30 @@ input, select, textarea {
 					background: #829bc9;
 				}
 
-			.icon.circle.fa-google-plus-g {
+			.icon.circle.fa-linkedin-in {
+				background: #dcad8b;
+				color: #fff;
+			}
+
+				.icon.circle.fa-linkedin-in:hover {
+					background: #e1b89b;
+				}
+
+			.icon.circle.fa-github-alt {
 				background: #db6b67;
 				color: #fff;
 			}
 
-				.icon.circle.fa-google-plus-g:hover {
+				.icon.circle.fa-github-alt:hover {
 					background: #df7b77;
 				}
 
-			.icon.circle.fa-github-alt {
-				background: #6e5494;
-				color: #fff;
-			}
-				.icon.circle.fa-github-alt:hover {
-					background: #dcad8b; /* #e1b89b; */
-				}
-
-
 			.icon.circle.fa-google-scholar {
-				background: #76a7fb;
-				color: #fff;
-			}
-				.icon.circle.fa-google-scholar:hover {
-					background: #3669c3; 
-				}
-
-			.icon.circle.fa-researchgate {
-				background: #40ba9b;
-				color: #fff;
-			}
-				.icon.circle.fa-researchgate:hover {
-					background: #33967e; 
-				}
-
-			.icon.circle.fa-linkedin {
-				background: #0073b2;
-				color: #fff;
-			}
-				.icon.circle.fa-linkedin:hover {
-					background: #005380; 
-				}
-	
-
-			.icon.circle.fa-dribbble {
 				background: #da83ae;
 				color: #fff;
 			}
 
-				.icon.circle.fa-dribbble:hover {
+				.icon.circle.fa-google-scholar:hover {
 					background: #df93b8;
 				}
 
@@ -2171,7 +2148,7 @@ input, select, textarea {
 		line-height: 3.75em;
 		text-align: center;
 		text-decoration: none;
-		text-transform: uppercase;
+		text-transform: none;
 	}
 
 		input[type="button"]:hover,
@@ -2347,7 +2324,7 @@ input, select, textarea {
 			letter-spacing: 0.075em;
 			position: absolute;
 			right: 1.5em;
-			text-transform: uppercase;
+			text-transform: none;
 			top: 0.75em;
 		}
 
@@ -2398,7 +2375,7 @@ input, select, textarea {
 							text-rendering: auto;
 							line-height: 1;
 							text-transform: none !important;
-							font-family: 'Font Awesome 6 Free';
+							font-family: 'Font Awesome 5 Free';
 							font-weight: 900;
 						}
 
@@ -2457,7 +2434,7 @@ input, select, textarea {
 		line-height: 2.25em;
 		min-width: 13em;
 		padding: 1em 0;
-		text-transform: uppercase;
+		text-transform: none;
 		margin-top: calc(-1em + 1px);
 	}
 
@@ -2591,13 +2568,13 @@ input, select, textarea {
 					margin: 0;
 					padding-left: 0.05em;
 					position: relative;
-					text-transform: uppercase;
+					text-transform: none;
 				}
 
 			#banner .inner p {
 				letter-spacing: 0.1em;
 				margin: 0;
-				text-transform: uppercase;
+				text-transform: none;
 			}
 
 				#banner .inner p a {
@@ -3031,7 +3008,7 @@ input, select, textarea {
 						text-rendering: auto;
 						line-height: 1;
 						text-transform: none !important;
-						font-family: 'Font Awesome 6 Free';
+						font-family: 'Font Awesome 5 Free';
 						font-weight: 900;
 					}
 
@@ -3085,7 +3062,7 @@ input, select, textarea {
 				color: #fff;
 				font-size: 0.8em;
 				letter-spacing: 0.075em;
-				text-transform: uppercase;
+				text-transform: none;
 				padding: 0.25em 0.75em 1em 0.75em;
 			}
 

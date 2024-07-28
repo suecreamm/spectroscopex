@@ -60,7 +60,9 @@ h1, h2, h3, h4, h5, h6, .title, .btn, .button {
 .tab-action-buttons, .subtab-action-buttons {
   display: flex;
   justify-content: center;
-  margin-top: 10px;
+  align-items: center;
+  width: 100%;
+  margin: 10px 0;
 }
 
 .tab-action-button, .subtab-action-button {
@@ -91,6 +93,13 @@ h1, h2, h3, h4, h5, h6, .title, .btn, .button {
 }
 
 /* Navigation Buttons */
+.navigation-buttons {
+  display: none; /* 기본적으로 숨김 */
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
 .navigation-button {
   display: inline-block;
   width: 30px;
@@ -118,7 +127,55 @@ h1, h2, h3, h4, h5, h6, .title, .btn, .button {
 
 /* Heatmap Canvas */
 #heatmapCanvas {
+  flex: 1;
   max-width: 100%;
+  min-width: 200px;
+  margin: 0 10px;
   height: auto; /* 반응형으로 크기 조절 */
-  margin: 0 auto; /* 중앙 정렬 */
+}
+
+.subtab-action-buttons {
+  display: flex;
+  justify-content: center; /* 중앙 정렬 */
+  align-items: center; /* 세로축 중앙 정렬 */
+  margin-top: 10px;
+  margin-bottom: 20px; /* 버튼과 다른 콘텐츠 사이에 간격 추가 */
+}
+
+.subtab-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  padding: 10px 15px;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+  margin: 0 5px; /* 버튼 간의 간격 조정 */
+}
+
+.subtab-action-button i {
+  margin-right: 8px;
+}
+
+.subtab-action-button.active {
+  background-color: #333;
+  color: #fff;
+}
+
+.subtab-action-button:hover {
+  background-color: #555;
+  color: #fff;
+}
+
+/* Tab Function Contents */
+/* 기본적으로 모든 콘텐츠를 숨깁니다. */
+.content {
+  display: none;
+}
+
+/* active 클래스가 추가되면 콘텐츠를 보이게 합니다. */
+.content.active {
+  display: block;
 }
