@@ -1,11 +1,9 @@
-import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import copy
 from io import BytesIO
 
-# 백엔드를 Agg로 설정하여 GUI 창을 띄우지 않도록 설정
 plt.switch_backend('Agg')
+
 
 def plot(explist, exptitles, save2D=True, num_xticks=5, num_yticks=5, num_cols=2):
     num_subplots = len(explist)
@@ -25,7 +23,7 @@ def plot(explist, exptitles, save2D=True, num_xticks=5, num_yticks=5, num_cols=2
         axs = [axs]
 
     plt.subplots_adjust(hspace=0, wspace=0)
-    im = None  # For storing the image handle for the colorbar
+    im = None
 
     for i, (df, title) in enumerate(zip(explist, exptitles)):
         Z = df.values
@@ -47,15 +45,14 @@ def plot(explist, exptitles, save2D=True, num_xticks=5, num_yticks=5, num_cols=2
         else:
             ax.set_xticklabels([])
 
-    # Create a colorbar at the right bottom outside the plot
-    cbar_ax = fig.add_axes([0.92, 0.063, 0.02, 0.15])  # [left, bottom, width, height]
+    cbar_ax = fig.add_axes([0.92, 0.063, 0.02, 0.15])
     fig.colorbar(im, cax=cbar_ax, orientation='vertical')
 
-    plt.tight_layout(rect=[0, 0, 0.9, 1])  # Adjust layout to make space for colorbar
+    plt.tight_layout(rect=[0, 0, 0.9, 1])
 
     img_bytes = BytesIO()
     plt.savefig(img_bytes, format='png')
     plt.close()
-    img_bytes.seek(0)  # 파일 포인터를 시작 위치로 이동
+    img_bytes.seek(0)
 
     return img_bytes
