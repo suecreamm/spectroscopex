@@ -3,13 +3,16 @@ const path = require('path');
 const fs = require('fs');
 const axios = require('axios');  // 서버와의 통신을 위한 HTTP 클라이언트
 
+
 function createWindow() {
     const win = new BrowserWindow({
       width: 800,
       height: 600,
       webPreferences: {
         preload: path.join(__dirname, 'frontend', 'preload.js'),
-        webSecurity: false  // CORS 문제 방지
+        webSecurity: false,  // CORS 문제 방지 
+        contextIsolation: true,
+        nodeIntegration: false
       },
     });
   

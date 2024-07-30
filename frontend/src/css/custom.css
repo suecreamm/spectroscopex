@@ -179,3 +179,43 @@ h1, h2, h3, h4, h5, h6, .title, .btn, .button {
 .content.active {
   display: block;
 }
+
+/* 이미지 반응형 스타일 추가 */
+#previewImage, #x_profile_plot, #y_profile_plot {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+
+
+
+/* 이미지 컨테이너 스타일 */
+.image-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* 미디어 쿼리 추가 */
+@media screen and (max-width: 768px) {
+  .tab {
+    flex: 1 0 45%;
+  }
+  
+  .tab-action-button, .subtab-action-button {
+    width: 100px;
+    font-size: 12px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .tab {
+    flex: 1 0 100%;
+  }
+  
+  .tab-action-button, .subtab-action-button {
+    width: 90px;
+    font-size: 11px;
+  }
+}
