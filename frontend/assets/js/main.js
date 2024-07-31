@@ -1,24 +1,23 @@
 /*
-	Twenty by HTML5 UP
+	Stellar by HTML5 UP
 	html5up.net | @ajlkn
 	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
 */
-
 
 (function($) {
 
 	var	$window = $(window),
 		$body = $('body'),
-		$header = $('#header'),
-		$banner = $('#banner');
+		$main = $('#main');
 
 	// Breakpoints.
-	// 	narrow:    [ '841px',   '980px'  ],
-	// narrower:  [ '737px',   '840px'  ],
 		breakpoints({
-			wide:      [ '1281px',  '1680px' ],
-			normal:    [ '981px',   '1280px' ],
-			mobile:    [ null,      '736px'  ]
+			xlarge:   [ '1281px',  '1680px' ],
+			large:    [ '981px',   '1280px' ],
+			medium:   [ '737px',   '980px'  ],
+			small:    [ '481px',   '736px'  ],
+			xsmall:   [ '361px',   '480px'  ],
+			xxsmall:  [ null,      '360px'  ]
 		});
 
 	// Play initial animations on page load.
@@ -28,71 +27,97 @@
 			}, 100);
 		});
 
-	// Scrolly.
-		$('.scrolly').scrolly({
-			speed: 1000,
-			offset: function() { return $header.height() + 10; }
-		});
+	// Nav.
+		var $nav = $('#nav');
 
-	// Dropdowns.
-		$('#nav > ul').dropotron({
-			mode: 'fade',
-			noOpenerFade: true,
-			expandMode: (browser.mobile ? 'click' : 'hover')
-		});
+		if ($nav.length > 0) {
 
-	// Nav Panel.
+			// Shrink effect.
+				$main
+					.scrollex({
+						mode: 'top',
+						enter: function() {
+							$nav.addClass('alt');
+						},
+						leave: function() {
+							$nav.removeClass('alt');
+						},
+					});
 
-		// Button.
-			$(
-				'<div id="navButton">' +
-					'<a href="#navPanel" class="toggle"></a>' +
-				'</div>'
-			)
-				.appendTo($body);
+			// Links.
+				var $nav_a = $nav.find('a');
 
-		// Panel.
-			$(
-				'<div id="navPanel">' +
-					'<nav>' +
-						$('#nav').navList() +
-					'</nav>' +
-				'</div>'
-			)
-				.appendTo($body)
-				.panel({
-					delay: 500,
-					hideOnClick: true,
-					hideOnSwipe: true,
-					resetScroll: true,
-					resetForms: true,
-					side: 'left',
-					target: $body,
-					visibleClass: 'navPanel-visible'
-				});
-				
+				$nav_a
+					.scrolly({
+						speed: 1000,
+						offset: function() { return $nav.height(); }
+					})
+					.on('click', function() {
 
-		// Fix: Remove navPanel transitions on WP<10 (poor/buggy performance).
-			if (browser.os == 'wp' && browser.osVersion < 10)
-				$('#navButton, #navPanel, #page-wrapper')
-					.css('transition', 'none');
+						var $this = $(this);
 
-	// Header.
-		if (!browser.mobile
-		&&	$header.hasClass('alt')
-		&&	$banner.length > 0) {
+						// External link? Bail.
+							if ($this.attr('href').charAt(0) != '#')
+								return;
 
-			$window.on('load', function() {
+						// Deactivate all links.
+							$nav_a
+								.removeClass('active')
+								.removeClass('active-locked');
 
-				$banner.scrollex({
-					bottom:		$header.outerHeight(),
-					terminate:	function() { $header.removeClass('alt'); },
-					enter:		function() { $header.addClass('alt reveal'); },
-					leave:		function() { $header.removeClass('alt'); }
-				});
+						// Activate link *and* lock it (so Scrollex doesn't try to activate other links as we're scrolling to this one's section).
+							$this
+								.addClass('active')
+								.addClass('active-locked');
 
-			});
+					})
+					.each(function() {
+
+						var	$this = $(this),
+							id = $this.attr('href'),
+							$section = $(id);
+
+						// No section for this link? Bail.
+							if ($section.length < 1)
+								return;
+
+						// Scrollex.
+							$section.scrollex({
+								mode: 'middle',
+								initialize: function() {
+
+									// Deactivate section.
+										if (browser.canUse('transition'))
+											$section.addClass('inactive');
+
+								},
+								enter: function() {
+
+									// Activate section.
+										$section.removeClass('inactive');
+
+									// No locked links? Deactivate all links and activate this section's one.
+										if ($nav_a.filter('.active-locked').length == 0) {
+
+											$nav_a.removeClass('active');
+											$this.addClass('active');
+
+										}
+
+									// Otherwise, if this section's link is the one that's locked, unlock it.
+										else if ($this.hasClass('active-locked'))
+											$this.removeClass('active-locked');
+
+								}
+							});
+
+					});
 
 		}
+
+	// Scrolly.
+		$('.scrolly').scrolly({
+			speed: 1000
+		});
 
 })(jQuery);

@@ -7,12 +7,10 @@
 }
 
 .upload-btn {
-  border: 2px solid #FFD700;
   color: white;
-  background-color: #FFD700;
-  padding: 8px 20px;
-  border-radius: 4px;
-  font-size: 16px;
+  /*  background-color: #FFD700; */
+  padding: 2px 2px;
+  font-size: 24px;
   font-weight: bold;
   cursor: pointer;
 }
@@ -170,13 +168,11 @@ h1, h2, h3, h4, h5, h6, .title, .btn, .button {
 }
 
 /* Tab Function Contents */
-/* 기본적으로 모든 콘텐츠를 숨깁니다. */
-.content {
+.tabPanel {
   display: none;
 }
 
-/* active 클래스가 추가되면 콘텐츠를 보이게 합니다. */
-.content.active {
+.tabPanel.active {
   display: block;
 }
 
@@ -187,9 +183,6 @@ h1, h2, h3, h4, h5, h6, .title, .btn, .button {
   display: block;
   margin: 0 auto;
 }
-
-
-
 
 /* 이미지 컨테이너 스타일 */
 .image-container {

@@ -2,161 +2,179 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Transformer X by Suecremm</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <title>Spectra Integritify</title>
     <link rel="stylesheet" href="assets/css/main.css">
     <link rel="stylesheet" href="src/css/custom.css">
     <link href="assets/css/all.min.css" rel="stylesheet" />
     <noscript><link rel="stylesheet" href="assets/css/noscript.css"></noscript>
 </head>
-<body class="index is-preload">
-    <div id="page-wrapper">
-        <header id="header" class="alt">
-            <h1 id="logo"><a href="index.html">DataTransformerX <span>by Suecremm</span></a></h1>
+<body class="is-preload">
+    
+    <div id="wrapper">
+        
+                <header id="header" class="alt">
+                    <span class="logo"><img src="images/logo.svg" alt="" /></span>
+                    <h1 >Spectra Integritify </h1>
+                    <p>Nulla massa urna, fermentum eget quam aliquet.<br />
+                    built by <a href="#">Suecreamm</a>.</p>
+                </header>
+
+
+            <!-- Nav -->
             <nav id="nav">
                 <ul>
                     <li class="submenu">
-                        <a href="#">About</a>
                         <ul>
-                            <li><a href="#dtx">DTX</a></li>
-                            <li><a href="contact.html">Contact</a></li>
-                        </ul>
+							<li><a href="#upload" class="active">Upload</a></li>
+							<li><a href="#analysis">Analysis</a></li>
+							<li><a href="#about">About</a></li>
+                            <li><a href="#supports">Supports</a></li>
+						</ul>
                     </li>
                 </ul>
             </nav>
-        </header>
 
-        <section id="banner">
-            <div class="inner">
-                <header>
-                    <h2>DataTransformerX</h2>
-                </header>
-                <p>This is <strong>DataTransformerX</strong>, a simple yet powerful tool
-                    <br>
-                    for data transformation
-                    <br>
-                    by <a href="#">Suecremm</a>.
-                </p>
-                <footer>
-                    <ul class="buttons stacked">
-                        <li><a href="#main" class="button fit scrolly">Get Started</a></li>
-                    </ul>
-                </footer>
-            </div>
-        </section>
+            <!-- Main -->
+					<div id="main">
 
-        <article id="main">
-            <header class="special container">
-                <span class="icon fa-solid fa-chart-bar"></span>
-                <h2>Welcome to <strong>DataTransformerX</strong> by Suecremm.</h2>
-                <p>DataTransformerX is designed to help you transform and manage your data effortlessly. Upload your CSV files and visualize your data as a heatmap with ease.
-                </p>
-                <div class="upload-btn-wrapper">
-                    <button class="upload-btn" id="uploadBtn">Upload CSV Files</button>
-                    <input type="file" id="fileInput" accept=".csv" multiple>
-                </div>
-                <div id="uploadMessage"></div>
-            </header>
+                        <!-- Get Started -->
+							<section id="upload" class="main special">
+								<header class="major">
+									<h2>Upload CSV Files</h2>
+									<p>Donec imperdiet consequat consequat. Suspendisse feugiat congue<br />
+									posuere. Nulla massa urna, fermentum eget quam aliquet.</p>
+								</header>
 
-            <section class="wrapper style3 container special-alt">
-                <div class="row gtr-50">
-                    <div class="col-12">
-                        <div class="tabs">
-                            <div class="tab active" data-content="preview">
-                                <i class="fa-solid fa-magnifying-glass"></i> Preview
-                            </div>
-                            <div class="tab" data-content="x_profile">
-                                <i class="fa-solid fa-x"></i> X-Profile
-                            </div>
-                            <div class="tab" data-content="y_profile">
-                                <i class="fa-solid fa-y"></i> Y-Profile
-                            </div>
-                            <div class="tab" data-content="transform">
-                                <i class="fa-solid fa-wrench"></i> Transform
-                            </div>
-                        </div>
-                        <div class="tab-action-buttons">
-                            <div class="tab-action-button active" id="viewAllBtn"><i class="fa-solid fa-grip"></i> View All</div>
-                            <div class="tab-action-button" id="viewSingleBtn"><i class="fa-solid fa-square"></i> View One</div>
-                        </div>
-                        <div class="content active" id="preview">
-                            <div class="image-container">
-                                <img id="previewImage" alt="Preview Image" style="display:none;">
-                            </div>
-                            <div class="navigation-buttons">
-                                <div class="navigation-button" id="prevBtn"><i class="fas fa-angle-left"></i></div>
-                                <div class="navigation-button" id="nextBtn"><i class="fas fa-angle-right"></i></div>
-                            </div>
-                        </div>
-                        <div class="content" id="x_profile">
-                            <div class="subtab-action-buttons">
-                                <div class="subtab-action-button" id="meanBtnX"><i class="fa-solid fa-chart-bar"></i> Mean</div>
-                                <div class="subtab-action-button" id="medianBtnX"><i class="fa-solid fa-balance-scale"></i> Median</div>
-                            </div>
-                            <div class="image-container">
-                                <img id="x_profile_plot" alt="X-Profile Plot" style="display:none;">
-                            </div>
-                        </div>
-                        <div class="content" id="y_profile">
-                            <div class="subtab-action-buttons">
-                                <div class="subtab-action-button" id="meanBtnY"><i class="fa-solid fa-chart-bar"></i> Mean</div>
-                                <div class="subtab-action-button" id="medianBtnY"><i class="fa-solid fa-balance-scale"></i> Median</div>
-                            </div>
-                            <div class="image-container">
-                                <img id="y_profile_plot" alt="Y-Profile Plot" style="display:none;">
-                            </div>
-                        </div>
-                        <div class="content" id="transform">
-                            <p>DataTransformerX provides a suite of intuitive yet powerful tools for data transformation, analysis, and visualization. Whether you're cleaning data, transforming it, or visualizing, DataTransformerX helps you maximize your data's potential.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
+                                <div class="upload-btn-wrapper">
+                                    <button class="upload-btn" id="uploadBtn"><i class="fa-solid fa-file-csv"></i></button>
+                                    <input type="file" id="fileInput" accept=".csv" multiple>
+                                </div>
+                                <div id="uploadMessage"></div>
 
-            <section class="wrapper style2 container special" id="dtx">
-                <header class="major">
-                    <h2>Discover more about <strong>DTX</strong></h2>
-                </header>
-                <div class="row">
-                    <div class="col-12">
-                        <section>
-                            <header>
-                                <h3>Data Transformation Experience</h3>
-                            </header>
-                            <p>DataTransformerX offers an intuitive interface and robust features that make data handling straightforward yet powerful. Experience the simplicity and power of DataTransformerX for all your data transformation needs.</p>
-                        </section>
-                    </div>
-                </div>
-                <footer class="major">
-                    <ul class="buttons">
-                        <li><a href="#" class="button">Learn More</a></li>
-                    </ul>
-                </footer>
-            </section>
-        </article>
+							</section>
+
+						<!-- First Section -->
+							<section id="analysis" class="main special">
+								<header class="major">
+									<h2>Analysis</h2>
+								</header>
+
+                                <div class="row gtr-50">
+                                    <div class="col-12">
+                                        <div class="tabs">
+                                            <div class="tab active" data-content="preview">
+                                                <i class="fa-solid fa-magnifying-glass"></i> Preview
+                                            </div>
+                                            <div class="tab" data-content="x_profile">
+                                                <i class="fa-solid fa-x"></i> X-Profile
+                                            </div>
+                                            <div class="tab" data-content="y_profile">
+                                                <i class="fa-solid fa-y"></i> Y-Profile
+                                            </div>
+                                            <div class="tab" data-content="transform">
+                                                <i class="fa-solid fa-wrench"></i> Transform
+                                            </div>
+                                        </div>
+
+                                        <div class="tab-action-buttons">
+                                            <div class="tab-action-button active" id="viewAllBtn"><i class="fa-solid fa-grip"></i> View All</div>
+                                            <div class="tab-action-button" id="viewSingleBtn"><i class="fa-solid fa-square"></i> View One</div>
+                                        </div>
+                                        <div class="tabcontent active" id="preview">
+                                            <div class="image-container">
+                                                <img id="previewImage" alt="Preview Image" style="display:none;">
+                                            </div>
+                                            <div class="navigation-buttons">
+                                                <div class="navigation-button" id="prevBtn"><i class="fas fa-angle-left"></i></div>
+                                                <div class="navigation-button" id="nextBtn"><i class="fas fa-angle-right"></i></div>
+                                            </div>
+                                        </div>
+                                        <div class="tabcontent" id="x_profile">
+                                            <div class="subtab-action-buttons">
+                                                <div class="subtab-action-button" id="meanBtnX"><i class="fa-solid fa-chart-bar"></i> Mean</div>
+                                                <div class="subtab-action-button" id="medianBtnX"><i class="fa-solid fa-balance-scale"></i> Median</div>
+                                            </div>
+                                            <div class="image-container">
+                                                <img id="x_profile_plot" alt="X-Profile Plot" style="display:none;">
+                                            </div>
+                                        </div>
+                                        <div class="tabcontent" id="y_profile">
+                                            <div class="subtab-action-buttons">
+                                                <div class="subtab-action-button" id="meanBtnY"><i class="fa-solid fa-chart-bar"></i> Mean</div>
+                                                <div class="subtab-action-button" id="medianBtnY"><i class="fa-solid fa-balance-scale"></i> Median</div>
+                                            </div>
+                                            <div class="image-container">
+                                                <img id="y_profile_plot" alt="Y-Profile Plot" style="display:none;">
+                                            </div>
+                                        </div>
+                                        <div class="tabcontent" id="transform">
+                                            <p>DataTransformerX provides a suite of intuitive yet powerful tools for data transformation, analysis, and visualization. Whether you're cleaning data, transforming it, or visualizing, DataTransformerX helps you maximize your data's potential.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+							</section>
+
+                        <!-- Introduction -->
+                            <section id="supports" class="main special">
+                                <div class="spotlight">
+                                    <div class="content">
+                                        <header class="major">
+                                            <h2>Supports</h2>
+                                        </header>
+                                        <p> Sed lorem ipsum dolor sit amet nullam consequat feugiat consequat magna
+                                        adipiscing magna etiam amet veroeros. Lorem ipsum dolor tempus sit cursus.
+                                        Tempus nisl et nullam lorem ipsum dolor sit amet aliquam.</p>
+                                        <ul class="actions">
+                                            <li><a href="generic.html" class="button">Learn More</a></li>
+                                        </ul>
+                                    </div>
+                                    <span class="image"><img src="images/pic01.jpg" alt="" /></span>
+                                </div>
+                            </section>
+						
+					</div>
 
         <footer id="footer">
-            <ul class="icons">
-                <li><a href="https://github.com/suecreamm" class="icon brands circle fa-brands fa-github-alt" ><span class="label">GitHub</span></a></li>
-                <li><a href="#" class="icon brands circle fa-brands fa-google-scholar"><span class="label">Google Scholar</span></a></li>
-                <li><a href="#" class="icon brands circle fa-brands fa-researchgate"><span class="label">Research Gate</span></a></li>
-                <li><a href="#" class="icon brands circle fa-brands fa-linkedin-in"><span class="label">LinkedIn</span></a></li>
-            </ul>
-            <ul class="copyright">
-                <li>&copy; Suecremm. All rights reserved.</li>
-                <li>Design: HTML5 UP</li>
-            </ul>
+            <section>
+                <h2>Aliquam sed mauris</h2>
+                <p>Sed lorem ipsum dolor sit amet et nullam consequat feugiat consequat magna adipiscing tempus etiam dolore veroeros. eget dapibus mauris. Cras aliquet, nisl ut viverra sollicitudin, ligula erat egestas velit, vitae tincidunt odio.</p>
+                <ul class="actions">
+                    <li><a href="" class="button">Learn More</a></li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>Etiam feugiat</h2>
+                <dl class="alt">
+                    <dt>Address</dt>
+                    <dd>Busan &bull; Republic of Korea</dd>
+                    <dt>Email</dt>
+                    <dd><a href="#">information@untitled.tld</a></dd>
+                </dl>
+                <ul class="icons">
+                    <li><a href="https://github.com/suecreamm" class="icon brands fa-github-alt alt"><span class="label">GitHub</span></a></li>
+                    <li><a href="#" class="icon brands fa-twitter alt"><span class="label">Twitter</span></a></li>
+                    <li><a href="#" class="icon brands fa-google-scholar alt"><span class="label">Google Scholar</span></a></li>
+                    <li><a href="#" class="icon brands fa-linkedin-in alt"><span class="label">LinkedIN</span></a></li>
+                    <li><a href="#" class="icon brands fa-instagram alt"><span class="label">Instagram</span></a></li>
+                </ul>    
+            </section>
+           
+            <p class="copyright"> &copy; Suecremm. All rights reserved. Design: HTML5 UP</p>
         </footer>
     </div>
 
-    <script src="assets/js/jquery.min.js"></script>
-    <script src="assets/js/jquery.dropotron.min.js"></script>
-    <script src="assets/js/jquery.scrolly.min.js"></script>
-    <script src="assets/js/jquery.scrollex.min.js"></script>
-    <script src="assets/js/browser.min.js"></script>
-    <script src="assets/js/breakpoints.min.js"></script>
-    <script src="assets/js/util.js"></script>
-    <script src="assets/js/main.js"></script>
-    <script type="module" src="src/js/index.js"></script>
-</body>
+    <!-- Scripts -->
+        <script src="assets/js/jquery.min.js"></script>
+        <script src="assets/js/jquery.dropotron.min.js"></script>
+        <script src="assets/js/jquery.scrolly.min.js"></script>
+        <script src="assets/js/jquery.scrollex.min.js"></script>
+        <script src="assets/js/browser.min.js"></script>
+        <script src="assets/js/breakpoints.min.js"></script>
+        <script src="assets/js/util.js"></script>
+        <script src="assets/js/main.js"></script>
+        <script type="module" src="src/js/index.js"></script>
+    </body>
 </html>
