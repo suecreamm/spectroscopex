@@ -4,14 +4,14 @@ export function initializeViewToggle() {
             const activeTab = document.querySelector('.tabs .tab.active');
             const tabContentId = activeTab ? activeTab.dataset.content : null;
 
-            document.querySelectorAll('.content').forEach(content => {
-                if (content.id === tabContentId && hasFileData()) {
-                    content.style.display = 'block';
-                    content.querySelectorAll('.subtab-action-buttons').forEach(button => {
+            document.querySelectorAll('.tabPanel').forEach(tabPanel => {
+                if (tabPanel.id === tabContentId && hasFileData()) {
+                    tabPanel.style.display = 'block';
+                    tabPanel.querySelectorAll('.subtab-action-buttons').forEach(button => {
                         button.style.display = 'flex';
                     });
                 } else {
-                    content.style.display = 'none';
+                    tabPanel.style.display = 'none';
                 }
             });
         }
