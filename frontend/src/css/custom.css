@@ -90,6 +90,30 @@ h1, h2, h3, h4, h5, h6, .title, .btn, .button {
   color: #fff;
 }
 
+/* transform */
+#transform .subtab-action-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;  /* 포인터 커서 추가 */
+  margin: 5px;
+  padding: 0;
+  box-sizing: border-box;  /* 패딩과 마진 포함하여 크기 조정 */
+}
+
+#transform .subtab-action-button svg,
+#transform .subtab-action-button img {
+  width: 20px; 
+  height: 20px;
+  fill: currentColor; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
 /* Navigation Buttons */
 .navigation-buttons {
   display: none; /* 기본적으로 숨김 */
