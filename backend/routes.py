@@ -5,6 +5,7 @@ import base64
 from file_processor import get_sorted_files, load_and_store_data
 from plotter import plot
 from profile_analyzer import generate_profile_data
+from transformer import *
 
 main_bp = Blueprint('main', __name__)
 
@@ -71,3 +72,31 @@ def get_profile():
                                          method=method)
     
     return jsonify(profile_data)
+
+@main_bp.route('/apply-transformation', methods=['POST'])
+def apply_transformation():
+    data = request.json
+    transformation = data['transformation']
+
+    files = request.files.getlist('filePaths')
+    file_paths = [secure_filename(file.filename) for file in files if file and allowed_file(file.filename)]
+    sorted_file_paths = get_sorted_files(file_paths)
+    explist, exptitles = load_and_store_data(sorted_file_paths)
+
+    if transformation == 'flip_ud':
+        transformed_df = flip_ud(explist)
+    elif transformation == 'flip_lr':
+        transformed_df = flip_lr(explist)
+    elif transformation == 'rotate_90':
+        transformed_df = rotate_90(explist)
+    else:
+        return jsonify({'error': 'Invalid transformation'}), 400
+
+    img_bytes = plot([transformed_df], exptitles)
+    img_base64 = base64.b64encode(img_bytes.getvalue()).decode('utf-8')
+
+    response_data = {
+        'image': f'data:image/png;base64,{img_base64}'
+    }
+
+    return jsonify(response_data)
