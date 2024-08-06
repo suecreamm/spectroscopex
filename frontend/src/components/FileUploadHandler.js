@@ -8,10 +8,24 @@ export function initializeFileUploadHandler() {
     const uploadMessage = document.getElementById('uploadMessage');
     const xProfilePlot = document.getElementById('x_profile_plot');
     const yProfilePlot = document.getElementById('y_profile_plot');
+    const savePreviewBtn = document.getElementById('savePreviewBtn');
+    const saveXProfileBtn = document.getElementById('saveXProfileBtn');
+    const saveYProfileBtn = document.getElementById('saveYProfileBtn');
+
   
     if (!fileInput || !previewImage || !viewAllBtn || !previewTab || !xProfileTab || !yProfileTab || !uploadMessage || !xProfilePlot || !yProfilePlot) {
         console.error('One or more required elements not found');
         return;
+    }
+
+    if (savePreviewBtn) {
+        savePreviewBtn.addEventListener('click', () => saveImage(previewImage, 'preview.png'));
+    }
+    if (saveXProfileBtn) {
+        saveXProfileBtn.addEventListener('click', () => saveImage(xProfilePlot, 'x_profile.png'));
+    }
+    if (saveYProfileBtn) {
+        saveYProfileBtn.addEventListener('click', () => saveImage(yProfilePlot, 'y_profile.png'));
     }
   
     fileInput.addEventListener('change', handleFileUpload);
@@ -138,6 +152,35 @@ export function initializeFileUploadHandler() {
           yProfilePlot.style.display = "block";
       }
   }
+
+  function saveImage(imageElement, fileName) {
+    if (imageElement.src.startsWith('data:image')) {
+        const link = document.createElement('a');
+        link.href = imageElement.src;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } else {
+        fetch(imageElement.src)
+            .then(response => response.blob())
+            .then(blob => {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            })
+            .catch(error => console.error('Error downloading image:', error));
+    }
+}
+
+
+
+
   
   }
   
