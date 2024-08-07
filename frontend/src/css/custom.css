@@ -66,7 +66,7 @@ h1, h2, h3, h4, h5, h6, .title, .btn, .button {
 .tab-action-button, .subtab-action-button {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-around;
   width: 120px;
   padding: 10px 15px;
   font-size: 14px;
@@ -90,29 +90,104 @@ h1, h2, h3, h4, h5, h6, .title, .btn, .button {
   color: #fff;
 }
 
-/* transform */
+/* transform
 #transform .subtab-action-button {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 30px;
   height: 30px;
-  cursor: pointer;  /* 포인터 커서 추가 */
+  cursor: pointer;  
   margin: 5px;
   padding: 0;
-  box-sizing: border-box;  /* 패딩과 마진 포함하여 크기 조정 */
+  box-sizing: border-box;
+  transition: background-color 0.3s ease, transform 0.3s ease, color 0.3s ease;
+} */
+
+
+
+#flipUdBtn {
+  background-color: white;
 }
 
-#transform .subtab-action-button svg,
-#transform .subtab-action-button img {
-  width: 20px; 
-  height: 20px;
-  fill: currentColor; 
-  display: flex;
-  justify-content: center;
-  align-items: center;
+#flipUdBtn img {
+  color: #555; /* 기본 아이콘 색상 */
 }
 
+#flipLrBtn {
+  background-color: white;
+}
+
+#flipLrBtn img {
+  color: #555; /* 기본 아이콘 색상 */
+}
+
+#rotateCcw90Btn {
+  background-color: white;
+}
+
+#rotateCcw90Btn img {
+  color: #555; /* 기본 아이콘 색상 */
+}
+
+#rotateCw90Btn {
+  background-color: white;
+}
+
+#rotateCw90Btn img {
+  color: #555; /* 기본 아이콘 색상 */
+}
+
+#resetBtn {
+  background-color: transparent;
+  color: #555;
+  margin-left: auto;
+}
+
+#flipUdBtn:hover {
+  background-color: #555;
+  transform: scale(1.1);
+}
+
+#flipUdBtn:hover img {
+  filter: invert(1) brightness(2); /* 색상 반전을 통해 흰색으로 변경 */
+}
+
+#flipLrBtn:hover {
+  background-color: #555;
+  transform: scale(1.1);
+}
+
+#flipLrBtn:hover img {
+  filter: invert(1) brightness(2);
+}
+
+#rotateCcw90Btn:hover {
+  background-color: #555;
+  transform: scale(1.1);
+}
+
+#rotateCcw90Btn:hover img {
+  filter: invert(1) brightness(2);
+}
+
+#rotateCw90Btn:hover {
+  background-color: #555;
+  transform: scale(1.1);
+}
+
+#rotateCw90Btn:hover img {
+  filter: invert(1) brightness(2);
+}
+
+#resetBtn:hover {
+  background-color: red;
+  color: white;
+}
+
+#resetBtn:hover img {
+  filter: invert(1) brightness(2);
+}
 
 /* Navigation Buttons */
 .navigation-buttons {
@@ -177,18 +252,14 @@ h1, h2, h3, h4, h5, h6, .title, .btn, .button {
   margin: 0 5px; /* 버튼 간의 간격 조정 */
 }
 
+.subtab-action-button img{
+  width: 20px; 
+  height: 20px;
+  transition: filter 0.3s ease, fill 0.3s ease; 
+}
+
 .subtab-action-button i {
   margin-right: 8px;
-}
-
-.subtab-action-button.active {
-  background-color: #333;
-  color: #fff;
-}
-
-.subtab-action-button:hover {
-  background-color: #555;
-  color: #fff;
 }
 
 /* Tab Function Contents */
