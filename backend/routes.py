@@ -1,9 +1,11 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
 import os
+import logging
+import traceback
 import base64
 from file_processor import get_sorted_files, load_and_store_data
-from plotter import plot
+from plotter import shift_and_preview, create_plot
 from profile_analyzer import generate_profile_data
 from transformer import *
 
@@ -28,11 +30,12 @@ def upload_directory():
         sorted_file_paths = get_sorted_files(file_paths)
         explist, exptitles = load_and_store_data(sorted_file_paths)
 
-        img_bytes = plot(explist, exptitles)
+        gauss_peak_x_mean, gauss_peak_y_mean, explist_shifted_gauss, img_bytes = shift_and_preview(explist, exptitles, plot=True)
+        
         img_base64 = base64.b64encode(img_bytes.getvalue()).decode('utf-8')
         
-        x_profile_data = generate_profile_data(explist, exptitles, profile_axis='x')
-        y_profile_data = generate_profile_data(explist, exptitles, profile_axis='y')
+        x_profile_data = generate_profile_data(explist_shifted_gauss, exptitles, profile_axis='x')
+        y_profile_data = generate_profile_data(explist_shifted_gauss, exptitles, profile_axis='y')
         
         # Base64 encode profile images
         x_profile_data['image'] = base64.b64encode(x_profile_data['image'].getvalue()).decode('utf-8')
@@ -43,13 +46,17 @@ def upload_directory():
             'profiles': {
                 'x_profile': x_profile_data,
                 'y_profile': y_profile_data
-            }
+            },
+            'gauss_peak_x_mean': gauss_peak_x_mean,
+            'gauss_peak_y_mean': gauss_peak_y_mean
         }
         
         return jsonify(response_data)
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        logging.error(f"Error in upload_directory: {str(e)}")
+        logging.error(traceback.format_exc())
+        return jsonify({'error': f'Server error: {str(e)}', 'traceback': traceback.format_exc()}), 500
 
     finally:
         for filepath in file_paths:
@@ -92,7 +99,7 @@ def apply_transformation():
     else:
         return jsonify({'error': 'Invalid transformation'}), 400
 
-    img_bytes = plot([transformed_df], exptitles)
+    img_bytes = create_plot([transformed_df], exptitles)
     img_base64 = base64.b64encode(img_bytes.getvalue()).decode('utf-8')
 
     response_data = {
