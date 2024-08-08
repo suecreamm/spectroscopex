@@ -40,33 +40,45 @@ export function initializeFileUploadHandler() {
         const files = event.target.files;
         if (files.length === 0) {
             console.error('No files selected');
+            uploadMessage.textContent = 'No files selected';
             return;
         }
-  
+    
         const formData = new FormData();
         for (const file of files) {
             formData.append('filePaths', file, file.name);
         }
-  
+    
         try {
+            uploadMessage.textContent = 'Uploading files...';
             const response = await fetch('http://localhost:7654/upload-directory', {
                 method: 'POST',
                 body: formData,
                 mode: 'cors',
             });
-  
+    
             if (!response.ok) {
-                throw new Error(`Server error ${response.status}: ${response.statusText}`);
+                const errorText = await response.text();
+                throw new Error(`Server error ${response.status}: ${response.statusText}. ${errorText}`);
             }
-  
+    
             const data = await response.json();
             lastUploadedData = data;  // 데이터 저장
             updatePreviewImage(data.image);
             updateProfilePlots(data.profiles);
             activatePreviewTab();
+            uploadMessage.textContent = 'Files uploaded and processed successfully.';
         } catch (error) {
-            uploadMessage.textContent = 'Failed to upload and process the file.';
+            uploadMessage.textContent = `Failed to upload and process the file: ${error.message}`;
             console.error('Error:', error);
+            
+            // 추가적인 오류 정보 로깅
+            if (error.response) {
+                console.error('Response:', error.response);
+            }
+            if (error.request) {
+                console.error('Request:', error.request);
+            }
         }
     }
   

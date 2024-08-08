@@ -82,6 +82,14 @@
                                             <div class="tab-action-button" id="viewSingleBtn"><i class="fa-solid fa-square"></i> View One</div>
                                         </div>
                                         <div class="tabPanel active" id="preview">
+                                            <div class="toggle-button-wrapper">
+                                                <label class="switch">
+                                                    <input type="checkbox" id="dataframetoOriginToggle" checked>
+                                                    <span class="slider"></span>
+                                                </label>
+                                                <span class="toggle-label">Dataframe to Origin</span>
+                                            </div>
+
                                             <div class="image-container">
                                                 <img id="previewImage" alt="Preview Image" style="display:none;">
                                             </div>
@@ -113,6 +121,9 @@
                                         </div>
                                         <div class="tabPanel" id="transform">
                                             <div class="subtab-action-buttons">
+                                                <div class="subtab-action-button" id="moveToOriginBtn">
+                                                    <img src="assets/icons/moveToOrigin.svg" alt="Move to the origin" />
+                                                </div>
                                                 <div class="subtab-action-button" id="flipUdBtn">
                                                     <img src="assets/icons/flipUD.svg" alt="Flip Up-Down" />
                                                 </div>

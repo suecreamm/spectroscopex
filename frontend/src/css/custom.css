@@ -90,58 +90,94 @@ h1, h2, h3, h4, h5, h6, .title, .btn, .button {
   color: #fff;
 }
 
-/* transform
-#transform .subtab-action-button {
+
+
+/* Toggle at Preview */
+.toggle-button-wrapper {
   display: flex;
-  justify-content: center;
+  padding: 5px;
+  justify-content: flex-end;
   align-items: center;
-  width: 30px;
-  height: 30px;
-  cursor: pointer;  
-  margin: 5px;
-  padding: 0;
-  box-sizing: border-box;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 24px;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.1);
+  transition: .4s;
+  border-radius: 24px;
+  border: 2px solid rgba(0, 0, 0, 0.3);
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 1px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #969696;
+}
+
+input:checked + .slider:before {
+  transform: translateX(24px);
+}
+
+input:not(:checked) + .slider {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.toggle-label {
+  color: #555;
+  white-space: nowrap;
+}
+
+
+
+#transform .subtab-action-button {
+  width: 36px;
+  height: 36px;
   transition: background-color 0.3s ease, transform 0.3s ease, color 0.3s ease;
-} */
-
-
-
-#flipUdBtn {
-  background-color: white;
-}
-
-#flipUdBtn img {
-  color: #555; /* 기본 아이콘 색상 */
-}
-
-#flipLrBtn {
-  background-color: white;
-}
-
-#flipLrBtn img {
-  color: #555; /* 기본 아이콘 색상 */
-}
-
-#rotateCcw90Btn {
-  background-color: white;
-}
-
-#rotateCcw90Btn img {
-  color: #555; /* 기본 아이콘 색상 */
-}
-
-#rotateCw90Btn {
-  background-color: white;
-}
-
-#rotateCw90Btn img {
-  color: #555; /* 기본 아이콘 색상 */
 }
 
 #resetBtn {
   background-color: transparent;
   color: #555;
   margin-left: auto;
+}
+
+#moveToOriginBtn:hover {
+  background-color: #555;
+  transform: scale(1.1);
+}
+
+#moveToOriginBtn:hover img {
+  filter: invert(1) brightness(2); /* 색상 반전을 통해 흰색으로 변경 */
 }
 
 #flipUdBtn:hover {
@@ -222,15 +258,6 @@ h1, h2, h3, h4, h5, h6, .title, .btn, .button {
   font-size: 24px; /* 아이콘 크기 조정 */
 }
 
-/* Heatmap Canvas */
-#heatmapCanvas {
-  flex: 1;
-  max-width: 100%;
-  min-width: 200px;
-  margin: 0 10px;
-  height: auto; /* 반응형으로 크기 조절 */
-}
-
 .subtab-action-buttons {
   display: flex;
   justify-content: center; /* 중앙 정렬 */
@@ -305,5 +332,11 @@ h1, h2, h3, h4, h5, h6, .title, .btn, .button {
   .tab-action-button, .subtab-action-button {
     width: 90px;
     font-size: 11px;
+  }
+}
+
+@media screen and (max-width: 736px) {
+  .toggle-button-wrapper {
+    justify-content: flex-end; /* 작은 화면에서도 오른쪽 정렬 유지 */
   }
 }
