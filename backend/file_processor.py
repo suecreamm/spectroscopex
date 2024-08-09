@@ -37,9 +37,20 @@ def load_and_store_data(file_paths, add_str='', add_str2=' K', multiply_small_me
     exptitles = []
 
     for path in file_paths:
+        print(f"Attempting to load file: {path}")  # 디버깅 메시지
+
+        if not os.path.exists(path):
+            print(f"Error: The file {path} does not exist.")  # 디버깅 메시지
+            continue
+
         if path.endswith('.csv'):
-            df = pd.read_csv(path, index_col=0)
-            df = ensure_numeric_index_and_columns(df, multiply_small_means)
+            try:
+                df = pd.read_csv(path, index_col=0)
+                print(f"Successfully loaded file: {path}")  # 디버깅 메시지
+                df = ensure_numeric_index_and_columns(df, multiply_small_means)
+            except Exception as e:
+                print(f"Error reading {path}: {e}")  # 디버깅 메시지
+                continue
             
             filename = os.path.basename(path)[:-4]
             number_part = re.findall(r'\d+', filename)
