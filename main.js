@@ -78,6 +78,27 @@ ipcMain.handle('upload-directory', async (event, directoryPath) => {
     }
 });
 
+ipcMain.handle('transform-image', async (event, action) => {
+    try {
+      const response = await axios.post('http://localhost:7654/transform', { action });
+      console.log('Backend response:', response.data);  // 디버깅을 위해 추가
+      if (response.data && response.data.success && response.data.image) {
+        return {
+          success: true,
+          image: response.data.image
+        };
+      } else {
+        throw new Error(response.data.error || 'Unknown error occurred');
+      }
+    } catch (error) {
+      console.error('Error transforming image:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  });
+
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit();

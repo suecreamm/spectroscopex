@@ -11,7 +11,11 @@ export function initializeFileUploadHandler() {
     const savePreviewBtn = document.getElementById('savePreviewBtn');
     const saveXProfileBtn = document.getElementById('saveXProfileBtn');
     const saveYProfileBtn = document.getElementById('saveYProfileBtn');
-    const saveCSVBtn = document.getElementById('saveCSVBtn'); // CSV 저장 버튼
+    const saveCSVBtn = document.getElementById('saveCSVBtn');
+
+    let lastUploadedData = null;
+    let initialUploadedData = null;
+    let updateTransformImage = null;
 
     if (!fileInput || !previewImage || !viewAllBtn || !previewTab || !xProfileTab || !yProfileTab || !uploadMessage || !xProfilePlot || !yProfilePlot) {
         console.error('One or more required elements not found');
@@ -28,7 +32,7 @@ export function initializeFileUploadHandler() {
         saveYProfileBtn.addEventListener('click', () => saveImage(yProfilePlot, 'y_profile.png'));
     }
     if (saveCSVBtn) {
-        saveCSVBtn.addEventListener('click', saveCSVFiles); // CSV 파일 저장 버튼 클릭 이벤트 핸들러
+        saveCSVBtn.addEventListener('click', saveCSVFiles);
     }
 
     fileInput.addEventListener('change', handleFileUpload);
@@ -36,8 +40,6 @@ export function initializeFileUploadHandler() {
     previewTab.addEventListener('click', loadImage);
     xProfileTab.addEventListener('click', () => loadProfile('x'));
     yProfileTab.addEventListener('click', () => loadProfile('y'));
-
-    let lastUploadedData = null;
 
     async function handleFileUpload(event) {
         const files = event.target.files;
@@ -53,7 +55,6 @@ export function initializeFileUploadHandler() {
         for (const file of files) {
             formData.append('filePaths', file, file.name);
 
-            // 파일 경로에서 디렉토리 경로 추출
             const filePath = file.webkitRelativePath || file.name; 
             if (!defaultSaveDir && filePath.includes('/')) {
                 defaultSaveDir = filePath.substring(0, filePath.lastIndexOf('/'));
@@ -75,9 +76,15 @@ export function initializeFileUploadHandler() {
 
             const data = await response.json();
             lastUploadedData = data;
-            lastUploadedData.defaultSaveDir = defaultSaveDir; // defaultSaveDir을 lastUploadedData에 저장
+            if (!initialUploadedData) {
+                initialUploadedData = JSON.parse(JSON.stringify(data));
+            }
+            lastUploadedData.defaultSaveDir = defaultSaveDir;
             updatePreviewImage(data.image);
             updateProfilePlots(data.profiles);
+            if (updateTransformImage) {
+                updateTransformImage(data.image);
+            }
             activatePreviewTab();
             uploadMessage.textContent = 'Files uploaded and processed successfully.';
         } catch (error) {
@@ -160,7 +167,6 @@ export function initializeFileUploadHandler() {
         }
     }
 
-    // Save the image currently displayed in the specified element
     function saveImage(imageElement, fileName) {
         if (imageElement.src.startsWith('data:image')) {
             const link = document.createElement('a');
@@ -193,7 +199,6 @@ export function initializeFileUploadHandler() {
             return;
         }
     
-        // 폴더 선택 대화창을 한 번만 띄움
         const saveDir = await window.electron.selectSaveDirectory();
     
         if (!saveDir) {
@@ -209,7 +214,7 @@ export function initializeFileUploadHandler() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    save_dir: saveDir, // 선택한 폴더를 서버로 전송
+                    save_dir: saveDir,
                     filePaths: lastUploadedData.filePaths
                 }),
                 mode: 'cors',
@@ -227,7 +232,7 @@ export function initializeFileUploadHandler() {
                 fileUrls.forEach((fileUrl) => {
                     const link = document.createElement('a');
                     link.href = fileUrl;
-                    link.download = ''; // 서버에서 제공하는 파일명을 사용하여 자동으로 다운로드
+                    link.download = '';
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
@@ -241,5 +246,48 @@ export function initializeFileUploadHandler() {
             console.error('Error downloading CSV files:', error);
         }
     }
-    
+
+    async function transformImage(action) {
+        try {
+            console.log('Transforming image:', action);
+            const response = await window.electron.transformImage(action);
+            console.log('Transform response:', response);
+            if (response.success && response.image) {
+                if (updateTransformImage) {
+                    updateTransformImage(response.image);
+                }
+                return { success: true, image: response.image };
+            } else {
+                throw new Error(response.error || 'Unknown error occurred');
+            }
+        } catch (error) {
+            console.error('Error in transformImage:', error);
+            throw error;
+        }
+    }
+
+    return {
+        updateUploadMessage: (message) => {
+            uploadMessage.textContent = message;
+        },
+        getLastUploadedData: () => lastUploadedData,
+        getInitialUploadedData: () => initialUploadedData,
+        setUpdateTransformImage: (func) => {
+            updateTransformImage = func;
+        },
+        resetToInitialState: () => {
+            if (initialUploadedData) {
+                updatePreviewImage(initialUploadedData.image);
+                updateProfilePlots(initialUploadedData.profiles);
+                if (updateTransformImage) {
+                    updateTransformImage(initialUploadedData.image);
+                }
+                lastUploadedData = JSON.parse(JSON.stringify(initialUploadedData));
+                uploadMessage.textContent = 'Reset to initial state.';
+            } else {
+                uploadMessage.textContent = 'No initial state available.';
+            }
+        },
+        transformImage: transformImage
+    };
 }

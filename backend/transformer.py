@@ -1,47 +1,51 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
+from plotter import create_plot
+import base64
 
 def flip_ud(df, change_sign=True):
     flipped_df = df.iloc[::-1]
-    if change_sign:
-        if pd.api.types.is_string_dtype(flipped_df.index):
-            try:
-                flipped_df.index = pd.to_numeric(flipped_df.index)
-            except ValueError:
-                pass  # If conversion fails, leave the index unchanged
-        if pd.api.types.is_numeric_dtype(flipped_df.index):
-            flipped_df.index = -flipped_df.index.to_series()
+    if change_sign and pd.api.types.is_numeric_dtype(flipped_df.index):
+        flipped_df.index = -flipped_df.index
     return flipped_df
 
 def flip_lr(df, change_sign=True):
     flipped_df = df.iloc[:, ::-1]
-    if change_sign:
-        if pd.api.types.is_string_dtype(flipped_df.columns):
-            try:
-                flipped_df.columns = pd.to_numeric(flipped_df.columns)
-            except ValueError:
-                pass  # If conversion fails, leave the columns unchanged
-        if pd.api.types.is_numeric_dtype(flipped_df.columns):
-            flipped_df.columns = -flipped_df.columns
+    if change_sign and pd.api.types.is_numeric_dtype(flipped_df.columns):
+        flipped_df.columns = -flipped_df.columns
     return flipped_df
 
-
-def rotate_90(df, change_sign=True):
-    rotated_df = df.T.iloc[::-1]
+def rotate_90(df, direction='ccw', change_sign=True):
+    if direction == 'ccw':
+        rotated_df = df.T.iloc[::-1]
+    else:  # clockwise
+        rotated_df = df.T.iloc[:, ::-1]
     if change_sign:
-        if pd.api.types.is_string_dtype(rotated_df.index):
-            try:
-                rotated_df.index = pd.to_numeric(rotated_df.index)
-            except ValueError:
-                pass
         if pd.api.types.is_numeric_dtype(rotated_df.index):
-            rotated_df.index = -rotated_df.index.to_series()
-
-        if pd.api.types.is_string_dtype(rotated_df.columns):
-            try:
-                rotated_df.columns = pd.to_numeric(rotated_df.columns)
-            except ValueError:
-                pass
+            rotated_df.index = -rotated_df.index
         if pd.api.types.is_numeric_dtype(rotated_df.columns):
             rotated_df.columns = -rotated_df.columns
     return rotated_df
+
+def transform_data(explist, action):
+    transformed_explist = []
+    for df in explist:
+        if action == 'flip_ud':
+            transformed_df = flip_ud(df)
+        elif action == 'flip_lr':
+            transformed_df = flip_lr(df)
+        elif action == 'rotate_ccw90':
+            transformed_df = rotate_90(df, direction='ccw')
+        elif action == 'rotate_cw90':
+            transformed_df = rotate_90(df, direction='cw')
+        elif action == 'reset':
+            transformed_df = df  # No transformation, just return the original
+        else:
+            raise ValueError(f"Unknown action: {action}")
+        transformed_explist.append(transformed_df)
+    return transformed_explist
+
+def get_transformed_plot(explist, exptitles):
+    img_bytes = create_plot(explist, exptitles)
+    img_base64 = base64.b64encode(img_bytes.getvalue()).decode('utf-8')
+    return f'data:image/png;base64,{img_base64}'
