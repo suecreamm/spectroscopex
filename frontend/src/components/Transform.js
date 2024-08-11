@@ -8,9 +8,16 @@ export function initializeTransform(fileUploadHandler) {
     const rotateCcw90Btn = document.getElementById('rotateCcw90Btn');
     const rotateCw90Btn = document.getElementById('rotateCw90Btn');
     const resetBtn = document.getElementById('resetBtn');
-    
+    const saveTransformImageBtn = document.getElementById('saveTransformImageBtn');
+    const exportTransformCSVBtn = document.getElementById('exportTransformCSVBtn');
+
     if (!transformTab || !transformImage || !flipUdBtn || !flipLrBtn || !rotateCcw90Btn || !rotateCw90Btn || !resetBtn) {
         console.error('One or more required elements for transform not found');
+        return;
+    }
+
+    if (!saveTransformImageBtn || !exportTransformCSVBtn) {
+        console.error('Save/Export buttons for transform not found');
         return;
     }
 
@@ -28,7 +35,6 @@ export function initializeTransform(fileUploadHandler) {
         }
     };
 
-    // FileUploadHandler에 updateTransformImage 함수 설정
     fileUploadHandler.setUpdateTransformImage(updateTransformImage);
 
     transformTab.addEventListener('click', loadTransformedImage);
@@ -38,6 +44,9 @@ export function initializeTransform(fileUploadHandler) {
     rotateCcw90Btn.addEventListener('click', () => sendTransformRequest('rotate_ccw90'));
     rotateCw90Btn.addEventListener('click', () => sendTransformRequest('rotate_cw90'));
     resetBtn.addEventListener('click', handleReset);
+
+    saveTransformImageBtn.addEventListener('click', saveTransformImage);
+    exportTransformCSVBtn.addEventListener('click', exportTransformCSV);
 
     function loadTransformedImage() {
         console.log('Loading transformed image');
@@ -71,7 +80,23 @@ export function initializeTransform(fileUploadHandler) {
         fileUploadHandler.resetToInitialState();
     }
 
+    function saveTransformImage() {
+        console.log('Saving transformed image');
+        if (transformImage.src && transformImage.src !== window.location.href) {
+            fileUploadHandler.saveImage(transformImage, 'transformed_image.png');
+        } else {
+            console.error('No transformed image available to save');
+        }
+    }
+
+    function exportTransformCSV() {
+        console.log('Exporting transformed data as CSV');
+        fileUploadHandler.exportCSVFiles();
+    }
+
     return {
-        updateTransformImage
+        updateTransformImage,
+        saveTransformImage,
+        exportTransformCSV
     };
 }

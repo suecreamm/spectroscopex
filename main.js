@@ -3,8 +3,8 @@ const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
 
-let lastUsedSaveDir = null;
-let isSelectingDirectory = false;  // 디렉토리 선택 중 여부를 추적하는 플래그
+const SERVER_URL = 'http://localhost:7654';
+let isSelectingDirectory = false;
 
 function createWindow() {
     const win = new BrowserWindow({
@@ -19,14 +19,14 @@ function createWindow() {
     });
   
     win.loadFile(path.join(__dirname, 'frontend', 'index.html'));
-    win.webContents.openDevTools();  // 개발자 도구 열기
+    if (process.env.NODE_ENV === 'development') {
+        win.webContents.openDevTools();
+    }
 }
 
 app.whenReady().then(createWindow);
 
 ipcMain.handle('select-directory', async () => {
-    console.log('select-directory handler called');  // 디버그 로그 추가
-    
     if (isSelectingDirectory) {
         console.log('Directory selection already in progress');
         return null;
@@ -56,48 +56,72 @@ ipcMain.handle('select-directory', async () => {
 });
 
 ipcMain.handle('upload-directory', async (event, directoryPath) => {
-    console.log('upload-directory handler called');  // 디버그 로그 추가
     try {
         const files = fs.readdirSync(directoryPath);
         const csvFiles = files.filter(file => file.endsWith('.csv'));
-
         const csvFilePaths = csvFiles.map(file => path.join(directoryPath, file));
 
-        console.log('Sending request to server with files:', csvFilePaths);  // 디버그 로그 추가
+        console.log('Sending request to server with files:', csvFilePaths);
 
-        const response = await axios.post('http://localhost:7654/upload-directory', {
+        const response = await axios.post(`${SERVER_URL}/upload-directory`, {
             directoryPath: directoryPath,
             filePaths: csvFilePaths
         });
 
-        console.log('Server response:', response.data);  // 디버그 로그 추가
+        console.log('Server response:', response.data);
         return response.data;
     } catch (error) {
         console.error('Error processing directory:', error);
-        throw error;
+        throw new Error(`Failed to process directory: ${error.message}`);
     }
 });
 
 ipcMain.handle('transform-image', async (event, action) => {
     try {
-      const response = await axios.post('http://localhost:7654/transform', { action });
-      console.log('Backend response:', response.data);  // 디버깅을 위해 추가
-      if (response.data && response.data.success && response.data.image) {
-        return {
-          success: true,
-          image: response.data.image
-        };
-      } else {
-        throw new Error(response.data.error || 'Unknown error occurred');
-      }
+        const response = await axios.post(`${SERVER_URL}/transform`, { action });
+        console.log('Backend response:', response.data);
+        
+        if (response.data && response.data.success && response.data.image) {
+            return {
+                success: true,
+                image: response.data.image
+            };
+        } else {
+            throw new Error(response.data.error || 'Unknown error occurred');
+        }
     } catch (error) {
-      console.error('Error transforming image:', error);
-      return {
-        success: false,
-        error: error.message
-      };
+        console.error('Error transforming image:', error);
+        return {
+            success: false,
+            error: `Image transformation failed: ${error.message}`
+        };
     }
-  });
+});
+
+ipcMain.handle('export-csv', async (event, data, suggestedFileName) => {
+    try {
+        const result = await dialog.showSaveDialog({
+            title: 'Export CSV',
+            defaultPath: path.join(app.getPath('downloads'), suggestedFileName || 'export.csv'),
+            filters: [
+                { name: 'CSV Files', extensions: ['csv'] }
+            ]
+        });
+
+        if (result.canceled) {
+            console.log('CSV export canceled');
+            return { success: false, message: 'Export canceled' };
+        }
+
+        fs.writeFileSync(result.filePath, data, 'utf-8');
+        console.log('CSV exported successfully to:', result.filePath);
+        return { success: true, filePath: result.filePath };
+    } catch (error) {
+        console.error('Error exporting CSV:', error);
+        return { success: false, error: `Failed to export CSV: ${error.message}` };
+    }
+});
+
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {

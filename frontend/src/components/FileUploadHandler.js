@@ -1,51 +1,56 @@
 export function initializeFileUploadHandler() {
-    const fileInput = document.getElementById('fileInput');
-    const previewImage = document.getElementById('previewImage');
-    const viewAllBtn = document.getElementById('viewAllBtn');
-    const previewTab = document.querySelector('.tab[data-content="preview"]');
-    const xProfileTab = document.querySelector('.tab[data-content="x_profile"]');
-    const yProfileTab = document.querySelector('.tab[data-content="y_profile"]');
-    const uploadMessage = document.getElementById('uploadMessage');
-    const xProfilePlot = document.getElementById('x_profile_plot');
-    const yProfilePlot = document.getElementById('y_profile_plot');
-    const savePreviewBtn = document.getElementById('savePreviewBtn');
-    const saveXProfileBtn = document.getElementById('saveXProfileBtn');
-    const saveYProfileBtn = document.getElementById('saveYProfileBtn');
-    const saveCSVBtn = document.getElementById('saveCSVBtn');
+    const elements = {
+        fileInput: document.getElementById('fileInput'),
+        previewImage: document.getElementById('previewImage'),
+        viewAllBtn: document.getElementById('viewAllBtn'),
+        previewTab: document.querySelector('.tab[data-content="preview"]'),
+        xProfileTab: document.querySelector('.tab[data-content="x_profile"]'),
+        yProfileTab: document.querySelector('.tab[data-content="y_profile"]'),
+        uploadMessage: document.getElementById('uploadMessage'),
+        xProfilePlot: document.getElementById('x_profile_plot'),
+        yProfilePlot: document.getElementById('y_profile_plot'),
+        savePreviewBtn: document.getElementById('savePreviewBtn'),
+        saveXProfileBtn: document.getElementById('saveXProfileBtn'),
+        saveYProfileBtn: document.getElementById('saveYProfileBtn'),
+        exportCSVBtn: document.getElementById('exportCSVBtn')
+    };
 
     let lastUploadedData = null;
     let initialUploadedData = null;
     let updateTransformImage = null;
 
-    if (!fileInput || !previewImage || !viewAllBtn || !previewTab || !xProfileTab || !yProfileTab || !uploadMessage || !xProfilePlot || !yProfilePlot) {
+    if (Object.values(elements).some(element => !element)) {
         console.error('One or more required elements not found');
         return;
     }
 
-    if (savePreviewBtn) {
-        savePreviewBtn.addEventListener('click', () => saveImage(previewImage, 'preview.png'));
-    }
-    if (saveXProfileBtn) {
-        saveXProfileBtn.addEventListener('click', () => saveImage(xProfilePlot, 'x_profile.png'));
-    }
-    if (saveYProfileBtn) {
-        saveYProfileBtn.addEventListener('click', () => saveImage(yProfilePlot, 'y_profile.png'));
-    }
-    if (saveCSVBtn) {
-        saveCSVBtn.addEventListener('click', saveCSVFiles);
-    }
+    initializeEventListeners();
 
-    fileInput.addEventListener('change', handleFileUpload);
-    viewAllBtn.addEventListener('click', loadImage);
-    previewTab.addEventListener('click', loadImage);
-    xProfileTab.addEventListener('click', () => loadProfile('x'));
-    yProfileTab.addEventListener('click', () => loadProfile('y'));
+    function initializeEventListeners() {
+        elements.fileInput.addEventListener('change', handleFileUpload);
+        elements.viewAllBtn.addEventListener('click', loadImage);
+        elements.previewTab.addEventListener('click', loadImage);
+        elements.xProfileTab.addEventListener('click', () => loadProfile('x'));
+        elements.yProfileTab.addEventListener('click', () => loadProfile('y'));
+
+        if (elements.savePreviewBtn) {
+            elements.savePreviewBtn.addEventListener('click', () => saveImage(elements.previewImage, 'preview.png'));
+        }
+        if (elements.saveXProfileBtn) {
+            elements.saveXProfileBtn.addEventListener('click', () => saveImage(elements.xProfilePlot, 'x_profile.png'));
+        }
+        if (elements.saveYProfileBtn) {
+            elements.saveYProfileBtn.addEventListener('click', () => saveImage(elements.yProfilePlot, 'y_profile.png'));
+        }
+        if (elements.exportCSVBtn) {
+            elements.exportCSVBtn.addEventListener('click', exportCSVFiles);
+        }
+    }
 
     async function handleFileUpload(event) {
         const files = event.target.files;
         if (files.length === 0) {
-            console.error('No files selected');
-            uploadMessage.textContent = 'No files selected';
+            updateUploadMessage('No files selected');
             return;
         }
 
@@ -54,7 +59,6 @@ export function initializeFileUploadHandler() {
 
         for (const file of files) {
             formData.append('filePaths', file, file.name);
-
             const filePath = file.webkitRelativePath || file.name; 
             if (!defaultSaveDir && filePath.includes('/')) {
                 defaultSaveDir = filePath.substring(0, filePath.lastIndexOf('/'));
@@ -62,7 +66,7 @@ export function initializeFileUploadHandler() {
         }
 
         try {
-            uploadMessage.textContent = 'Uploading files...';
+            updateUploadMessage('Uploading files...');
             const response = await fetch('http://localhost:7654/upload-directory', {
                 method: 'POST',
                 body: formData,
@@ -70,8 +74,7 @@ export function initializeFileUploadHandler() {
             });
 
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Server error ${response.status}: ${response.statusText}. ${errorText}`);
+                throw new Error(`Server error ${response.status}: ${response.statusText}`);
             }
 
             const data = await response.json();
@@ -86,35 +89,35 @@ export function initializeFileUploadHandler() {
                 updateTransformImage(data.image);
             }
             activatePreviewTab();
-            uploadMessage.textContent = 'Files uploaded and processed successfully.';
+            updateUploadMessage('Files uploaded and processed successfully.');
         } catch (error) {
-            uploadMessage.textContent = `Failed to upload and process the file: ${error.message}`;
+            updateUploadMessage(`Failed to upload and process the file: ${error.message}`);
             console.error('Error:', error);
         }
     }
 
     function updatePreviewImage(imageUrl) {
-        previewImage.src = imageUrl;
-        previewImage.alt = "Plot Image";
-        previewImage.style.display = "block";
-        previewImage.style.margin = "0 auto";
+        elements.previewImage.src = imageUrl;
+        elements.previewImage.alt = "Plot Image";
+        elements.previewImage.style.display = "block";
+        elements.previewImage.style.margin = "0 auto";
     }
 
     function updateProfilePlots(profiles) {
-        if (profiles.x_profile && profiles.x_profile.image) {
-            xProfilePlot.src = `data:image/png;base64,${profiles.x_profile.image}`;
-            xProfilePlot.style.display = "block";
-            document.getElementById('saveXProfileBtn').style.display = 'inline-block';
-        }
-        if (profiles.y_profile && profiles.y_profile.image) {
-            yProfilePlot.src = `data:image/png;base64,${profiles.y_profile.image}`;
-            yProfilePlot.style.display = "block";
-            document.getElementById('saveYProfileBtn').style.display = 'inline-block';
+        updateProfilePlot(profiles.x_profile, elements.xProfilePlot, 'saveXProfileBtn');
+        updateProfilePlot(profiles.y_profile, elements.yProfilePlot, 'saveYProfileBtn');
+    }
+
+    function updateProfilePlot(profileData, plotElement, saveBtnId) {
+        if (profileData && profileData.image) {
+            plotElement.src = `data:image/png;base64,${profileData.image}`;
+            plotElement.style.display = "block";
+            document.getElementById(saveBtnId).style.display = 'inline-block';
         }
     }
 
     function activatePreviewTab() {
-        activateTab(previewTab);
+        activateTab(elements.previewTab);
     }
 
     function activateTab(tab) {
@@ -131,26 +134,25 @@ export function initializeFileUploadHandler() {
             tabPanel.classList.add('active');
             tabPanel.style.display = 'block';
         }
-        viewAllBtn.classList.add('active');
+        elements.viewAllBtn.classList.add('active');
     }
 
     function loadImage() {
-        if (viewAllBtn.classList.contains('active') && previewTab.classList.contains('active')) {
+        if (elements.viewAllBtn.classList.contains('active') && elements.previewTab.classList.contains('active')) {
             if (lastUploadedData) {
                 updatePreviewImage(lastUploadedData.image);
             } else {
-                const changeEvent = new Event('change');
-                fileInput.dispatchEvent(changeEvent);
+                elements.fileInput.dispatchEvent(new Event('change'));
             }
         }
     }
 
     function loadProfile(axis) {
         const isXProfile = axis === 'x';
-        const profileTab = isXProfile ? xProfileTab : yProfileTab;
-        const profilePlot = isXProfile ? xProfilePlot : yProfilePlot;
+        const profileTab = isXProfile ? elements.xProfileTab : elements.yProfileTab;
+        const profilePlot = isXProfile ? elements.xProfilePlot : elements.yProfilePlot;
 
-        if (viewAllBtn.classList.contains('active') && profileTab.classList.contains('active')) {
+        if (elements.viewAllBtn.classList.contains('active') && profileTab.classList.contains('active')) {
             if (lastUploadedData && lastUploadedData.profiles) {
                 const profileData = isXProfile ? lastUploadedData.profiles.x_profile : lastUploadedData.profiles.y_profile;
                 if (profileData && profileData.image) {
@@ -161,58 +163,52 @@ export function initializeFileUploadHandler() {
                 }
             } else {
                 console.log(`No uploaded data available for ${axis.toUpperCase()}-profile, triggering file input`);
-                const changeEvent = new Event('change');
-                fileInput.dispatchEvent(changeEvent);
+                elements.fileInput.dispatchEvent(new Event('change'));
             }
         }
     }
 
     function saveImage(imageElement, fileName) {
         if (imageElement.src.startsWith('data:image')) {
-            const link = document.createElement('a');
-            link.href = imageElement.src;
-            link.download = fileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            downloadImage(imageElement.src, fileName);
         } else {
             fetch(imageElement.src)
                 .then(response => response.blob())
                 .then(blob => {
                     const url = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = fileName;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                    downloadImage(url, fileName);
                     URL.revokeObjectURL(url);
                 })
                 .catch(error => console.error('Error downloading image:', error));
         }
     }
 
-    async function saveCSVFiles() {
+    function downloadImage(url, fileName) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    async function exportCSVFiles() {
         if (!lastUploadedData) {
-            console.error('No data available to save as CSV');
-            uploadMessage.textContent = 'No data available to save as CSV';
+            updateUploadMessage('No data available to export as CSV');
             return;
         }
     
         const saveDir = await window.electron.selectSaveDirectory();
     
         if (!saveDir) {
-            console.error('No save directory selected');
-            uploadMessage.textContent = 'No save directory selected';
+            updateUploadMessage('No save directory selected');
             return;
         }
     
         try {
             const response = await fetch('http://localhost:7654/download-shifted-data', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     save_dir: saveDir,
                     filePaths: lastUploadedData.filePaths
@@ -221,29 +217,21 @@ export function initializeFileUploadHandler() {
             });
     
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Server error ${response.status}: ${response.statusText}. ${errorText}`);
+                throw new Error(`Server error ${response.status}: ${response.statusText}`);
             }
     
             const data = await response.json();
             const fileUrls = data.file_urls;
     
             if (fileUrls && fileUrls.length > 0) {
-                fileUrls.forEach((fileUrl) => {
-                    const link = document.createElement('a');
-                    link.href = fileUrl;
-                    link.download = '';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                });
-                uploadMessage.textContent = 'CSV files downloaded successfully.';
+                fileUrls.forEach(fileUrl => downloadImage(fileUrl, ''));
+                updateUploadMessage('CSV files exported successfully.');
             } else {
-                uploadMessage.textContent = 'No CSV files available to download.';
+                updateUploadMessage('No CSV files available to export.');
             }
         } catch (error) {
-            uploadMessage.textContent = `Failed to download CSV files: ${error.message}`;
-            console.error('Error downloading CSV files:', error);
+            updateUploadMessage(`Failed to export CSV files: ${error.message}`);
+            console.error('Error exporting CSV files:', error);
         }
     }
 
@@ -266,10 +254,12 @@ export function initializeFileUploadHandler() {
         }
     }
 
+    function updateUploadMessage(message) {
+        elements.uploadMessage.textContent = message;
+    }
+
     return {
-        updateUploadMessage: (message) => {
-            uploadMessage.textContent = message;
-        },
+        updateUploadMessage,
         getLastUploadedData: () => lastUploadedData,
         getInitialUploadedData: () => initialUploadedData,
         setUpdateTransformImage: (func) => {
@@ -283,11 +273,13 @@ export function initializeFileUploadHandler() {
                     updateTransformImage(initialUploadedData.image);
                 }
                 lastUploadedData = JSON.parse(JSON.stringify(initialUploadedData));
-                uploadMessage.textContent = 'Reset to initial state.';
+                updateUploadMessage('Reset to initial state.');
             } else {
-                uploadMessage.textContent = 'No initial state available.';
+                updateUploadMessage('No initial state available.');
             }
         },
-        transformImage: transformImage
+        saveImage,
+        exportCSVFiles,
+        transformImage
     };
 }

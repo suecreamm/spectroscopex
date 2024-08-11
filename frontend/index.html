@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
     <title>Spectra Integritify</title>
-    <link rel="stylesheet" href="src/css/custom.css">
     <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="src/css/custom.css">
     
     <link href="assets/css/all.min.css" rel="stylesheet" />
     <noscript><link rel="stylesheet" href="assets/css/noscript.css"></noscript>
@@ -101,8 +101,8 @@
                                             <button id="savePreviewBtn" class="save-button">
                                                 <i class="fa-solid fa-image"></i> Save Image
                                             </button>
-                                            <button id="saveCSVBtn" class="save-button">
-                                                <i class="fa-solid fa-floppy-disk"></i> Save CSV
+                                            <button id="exportCSVBtn" class="save-button">
+                                                <i class="fa-solid fa-floppy-disk"></i> Export CSV
                                             </button>
                                         </div>
                                         <div class="tabPanel" id="x_profile">
@@ -149,7 +149,14 @@
 
                                             <div class="image-container">
                                                 <img id="transformImage" alt="Transformed Image" style="display:none;">
-                                                
+                                            </div>
+                                            <div class="button-container">
+                                                <button id="saveTransformImageBtn" class="save-button">
+                                                    <i class="fa-solid fa-image"></i> Save Image
+                                                </button>
+                                                <button id="exportTransformCSVBtn" class="save-button">
+                                                    <i class="fa-solid fa-floppy-disk"></i> Export CSV
+                                                </button>
                                             </div>
                                         </div>
 
@@ -191,9 +198,9 @@
                 <h2>Etiam feugiat</h2>
                 <dl class="alt">
                     <dt>Address</dt>
-                    <dd>Busan &bull; Republic of Korea</dd>
+                    <dd>Busan &bull; Korea</dd>
                     <dt>Email</dt>
-                    <dd><a href="#">information@untitled.tld</a></dd>
+                    <dd><a href="#">hwang.sue.hyeon@gmail.com</a></dd>
                 </dl>
                 <ul class="icons">
                     <li><a href="https://github.com/suecreamm" class="icon brands fa-github-alt alt"><span class="label">GitHub</span></a></li>
@@ -204,8 +211,15 @@
                 </ul>    
             </section>
            
-            <p class="copyright"> &copy; Suecremm. All rights reserved. Design: HTML5 UP</p>
+            <p class="copyright"> &copy; Suecremm. All rights reserved. <a href="#" id="licenseLink" data-modal="license.html">License</a></p>
         </footer>
+    </div>
+
+    <!-- License Modal -->
+    <div id="licenseModal" class="modal">
+        <div id="modalBodyContent" class="modal-content">
+            <!-- license.html의 내용이 여기에 동적으로 로드됩니다. -->
+        </div>
     </div>
 
     <!-- Scripts -->
@@ -218,5 +232,6 @@
         <script src="assets/js/util.js"></script>
         <script src="assets/js/main.js"></script>
         <script type="module" src="src/js/index.js"></script>
+        <script src="assets/js/modal.js"></script>
     </body>
 </html>

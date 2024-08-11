@@ -1,4 +1,3 @@
-// renderer.js
 let isProcessing = false;
 
 function addSelectDirectoryListener() {
