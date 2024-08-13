@@ -8,27 +8,11 @@ export function initializeTransform(fileUploadHandler) {
     const rotateCcw90Btn = document.getElementById('rotateCcw90Btn');
     const rotateCw90Btn = document.getElementById('rotateCw90Btn');
     const resetBtn = document.getElementById('resetBtn');
-    const saveTransformImageBtn = document.getElementById('saveTransformImageBtn');
-    const exportTransformCSVBtn = document.getElementById('exportTransformCSVBtn');
-
-    if (!transformTab || !transformImage || !flipUdBtn || !flipLrBtn || !rotateCcw90Btn || !rotateCw90Btn || !resetBtn) {
-        console.error('One or more required elements for transform not found');
-        return;
-    }
-
-    if (!saveTransformImageBtn || !exportTransformCSVBtn) {
-        console.error('Save/Export buttons for transform not found');
-        return;
-    }
 
     const updateTransformImage = (imageData) => {
         console.log('Updating transform image');
         if (typeof imageData === 'string') {
-            if (imageData.startsWith('data:image')) {
-                transformImage.src = imageData;
-            } else {
-                transformImage.src = `data:image/png;base64,${imageData}`;
-            }
+            transformImage.src = imageData;
             transformImage.style.display = "block";
         } else {
             console.error('Invalid image data:', imageData);
@@ -45,24 +29,17 @@ export function initializeTransform(fileUploadHandler) {
     rotateCw90Btn.addEventListener('click', () => sendTransformRequest('rotate_cw90'));
     resetBtn.addEventListener('click', handleReset);
 
-    saveTransformImageBtn.addEventListener('click', saveTransformImage);
-    exportTransformCSVBtn.addEventListener('click', exportTransformCSV);
-
     function loadTransformedImage() {
         console.log('Loading transformed image');
-        if (transformImage.src && transformImage.src !== window.location.href) {
-            transformImage.style.display = "block";
-        } else {
-            console.log('No transformed image data available yet');
-        }
+        const qEnergyLossEnabled = fileUploadHandler.isQEnergyLossEnabled();
+        sendTransformRequest('reset', qEnergyLossEnabled);
     }
 
-    async function sendTransformRequest(action) {
+    async function sendTransformRequest(action, qEnergyLossEnabled) {
         console.log(`Sending transform request: ${action}`);
         fileUploadHandler.updateUploadMessage('Transforming image...');
         try {
-            const response = await fileUploadHandler.transformImage(action);
-            console.log('Transform response:', response);
+            const response = await fileUploadHandler.transformImage(action, qEnergyLossEnabled);
             if (response.success && response.image) {
                 updateTransformImage(response.image);
                 fileUploadHandler.updateUploadMessage('Image transformed successfully.');
@@ -76,27 +53,7 @@ export function initializeTransform(fileUploadHandler) {
     }
 
     function handleReset() {
-        console.log('Resetting to initial state');
-        fileUploadHandler.resetToInitialState();
+        const qEnergyLossEnabled = fileUploadHandler.isQEnergyLossEnabled();
+        sendTransformRequest('reset', qEnergyLossEnabled);
     }
-
-    function saveTransformImage() {
-        console.log('Saving transformed image');
-        if (transformImage.src && transformImage.src !== window.location.href) {
-            fileUploadHandler.saveImage(transformImage, 'transformed_image.png');
-        } else {
-            console.error('No transformed image available to save');
-        }
-    }
-
-    function exportTransformCSV() {
-        console.log('Exporting transformed data as CSV');
-        fileUploadHandler.exportCSVFiles();
-    }
-
-    return {
-        updateTransformImage,
-        saveTransformImage,
-        exportTransformCSV
-    };
 }

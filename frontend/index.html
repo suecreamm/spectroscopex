@@ -81,30 +81,39 @@
                                             <div class="tab-action-button active" id="viewAllBtn"><i class="fa-solid fa-grip"></i> View All</div>
                                             <div class="tab-action-button" id="viewSingleBtn"><i class="fa-solid fa-square"></i> View One</div>
                                         </div>
-                                        <div class="tabPanel active" id="preview">
-                                            <div class="toggle-button-wrapper">
-                                                <label class="switch">
-                                                    <input type="checkbox" id="dataframetoOriginToggle" checked>
-                                                    <span class="slider"></span>
-                                                </label>
-                                                <span class="toggle-label">Dataframe to Origin</span>
-                                            </div>
 
+                                        <div class="tabPanel active" id="preview">
+                                            <div class="button-container">
+                                                <div class="col-6 col-12-small">
+                                                    <input type="checkbox" id="q-energyloss">
+                                                    <label for="q-energyloss">q - Energy Loss </label>
+                                                </div>
+
+                                                <div class="col-6 col-12-small">
+                                                        <input type="checkbox" id="dataframetoOriginToggle" checked>
+                                                        <label for="dataframetoOriginToggle">Dataframe to Origin </label>
+                                                </div>
+                                            </div>
+                                            
                                             <div class="image-container">
                                                 <img id="previewImage" alt="Preview Image" style="display:none;">
+                                                <img id="qPlotImage" alt="q-Energy Loss Plot" style="display:none;">
                                             </div>
                                             <div class="navigation-buttons">
                                                 <div class="navigation-button" id="prevBtn"><i class="fas fa-angle-left"></i></div>
                                                 <div class="navigation-button" id="nextBtn"><i class="fas fa-angle-right"></i></div>
                                             </div>
 
-                                            <button id="savePreviewBtn" class="save-button">
-                                                <i class="fa-solid fa-image"></i> Save Image
-                                            </button>
-                                            <button id="exportCSVBtn" class="save-button">
-                                                <i class="fa-solid fa-floppy-disk"></i> Export CSV
-                                            </button>
+                                            <div class="button-container">
+                                                <button id="savePreviewBtn" class="save-button primary">
+                                                    <i class="fa-solid fa-image"></i> Save Image
+                                                </button>
+                                                <button id="exportCSVBtn" class="save-button">
+                                                    <i class="fa-solid fa-floppy-disk"></i> Export CSV
+                                                </button>  
+                                            </div>
                                         </div>
+
                                         <div class="tabPanel" id="x_profile">
                                             <div class="subtab-action-buttons">
                                                 <div class="subtab-action-button" id="meanBtnX"><i class="fa-solid fa-chart-bar"></i> Mean</div>
@@ -112,7 +121,9 @@
                                             </div>
                                             <div class="image-container">
                                                 <img id="x_profile_plot" alt="X-Profile Plot" style="display:none;">
-                                                <button id="saveXProfileBtn" class="save-button"><i class="fa-solid fa-download"></i> Save Image</button>
+                                                <div class="button-container">
+                                                    <button id="saveXProfileBtn" class="save-button primary"><i class="fa-solid fa-download"></i> Save Image</button>
+                                                </div>                                                
                                             </div>
                                         </div>
                                         <div class="tabPanel" id="y_profile">
@@ -122,14 +133,14 @@
                                             </div>
                                             <div class="image-container">
                                                 <img id="y_profile_plot" alt="Y-Profile Plot" style="display:none;">
-                                                <button id="saveYProfileBtn" class="save-button"><i class="fa-solid fa-download"></i> Save Image</button>
+                                                <div class="button-container">
+                                                    <button id="saveYProfileBtn" class="save-button primary"><i class="fa-solid fa-download"></i> Save Image</button>
+                                                </div>
+                                                
                                             </div>
                                         </div>
                                         <div class="tabPanel" id="transform">
                                             <div class="subtab-action-buttons">
-                                                <div class="subtab-action-button" id="moveToOriginBtn">
-                                                    <img src="assets/icons/moveToOrigin.svg" alt="Move to the origin" />
-                                                </div>
                                                 <div class="subtab-action-button" id="flipUdBtn">
                                                     <img src="assets/icons/flipUD.svg" alt="Flip Up-Down" />
                                                 </div>
@@ -151,7 +162,7 @@
                                                 <img id="transformImage" alt="Transformed Image" style="display:none;">
                                             </div>
                                             <div class="button-container">
-                                                <button id="saveTransformImageBtn" class="save-button">
+                                                <button id="saveTransformImageBtn" class="save-button primary">
                                                     <i class="fa-solid fa-image"></i> Save Image
                                                 </button>
                                                 <button id="exportTransformCSVBtn" class="save-button">
@@ -224,7 +235,6 @@
 
     <!-- Scripts -->
         <script src="assets/js/jquery.min.js"></script>
-        <script src="assets/js/jquery.dropotron.min.js"></script>
         <script src="assets/js/jquery.scrolly.min.js"></script>
         <script src="assets/js/jquery.scrollex.min.js"></script>
         <script src="assets/js/browser.min.js"></script>

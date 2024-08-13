@@ -8,8 +8,8 @@ let isSelectingDirectory = false;
 
 function createWindow() {
     const win = new BrowserWindow({
-        width: 800,
-        height: 600,
+        width: 1000,
+        height: 750,
         webPreferences: {
             preload: path.join(__dirname, 'frontend', 'preload.js'),
             webSecurity: false,

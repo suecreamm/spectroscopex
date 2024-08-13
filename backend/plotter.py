@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.font_manager as fm 
 import pandas as pd
 import matplotlib.pyplot as plt
 import math
@@ -21,7 +22,7 @@ def convert_to_float(value):
         return value
 
 
-def create_plot(explist, exptitles, save2D=True, num_xticks=5, num_yticks=5, num_cols=2):
+def create_plot(explist, exptitles, save2D=True, num_xticks=5, num_yticks=5, num_cols=2, apply_log=True):
     num_subplots = len(explist)
     num_rows = (num_subplots + num_cols - 1) // num_cols
 
@@ -43,7 +44,11 @@ def create_plot(explist, exptitles, save2D=True, num_xticks=5, num_yticks=5, num
 
     for i, (df, title) in enumerate(zip(explist, exptitles)):
         Z = df.values
-        Z = np.log1p(Z)
+        
+        # 로그 변환을 적용할지 여부를 결정
+        if apply_log:
+            Z = np.log1p(Z)
+        
         x = df.columns.astype(float)
         y = df.index.astype(float)
 
@@ -239,3 +244,169 @@ def shift_and_preview(explist, exptitles, plot=True):
         img_bytes = create_plot(explist_shifted_gauss, exptitles)
 
     return gauss_peak_x_mean, gauss_peak_y_mean, explist_shifted_gauss, img_bytes
+
+
+def angle_to_q(angle, E0, E_loss):
+    if E_loss < 0 or angle < 0:
+        return np.nan
+
+    hbar_eV = 6.582119569e-16  # eV*s
+    m_e_eV = 0.5109989461e6 / (299792458**2)  # eV/(m/s)^2
+    c = 299792458  # m/s
+
+    k0 = np.sqrt(2 * m_e_eV * E0) / (hbar_eV * c)
+    k1 = np.sqrt(2 * m_e_eV * (E0 - E_loss)) / (hbar_eV * c)
+
+    q = np.sqrt(k0**2 + k1**2 - 2*k0*k1*np.cos(angle))
+
+    return q  # Å^-1로 변환
+
+def find_zero_indices(q_values, new_q_values, debugging=False):
+    original_zeros = np.where(q_values == 0)[0]
+    new_zeros = np.where(new_q_values == 0)[0]
+
+    if debugging:
+        print(f"Original q_values zero indices: {original_zeros}")
+        print(f"New q_values zero indices: {new_zeros}")
+
+    return original_zeros, new_zeros
+
+def process_q_values(q_values, debugging=True):
+    valid_q = q_values[~np.isnan(q_values) & ~np.isinf(q_values)]
+
+    if debugging:
+        print(f"Valid q values: {valid_q}")
+
+    if len(valid_q) == 0:
+        if debugging:
+            print("No valid q values found, returning original q_values")
+        return q_values
+
+    positive_q = valid_q[valid_q > 0]
+    if len(positive_q) == 0:
+        if debugging:
+            print("No positive q values found, returning original q_values")
+        return q_values
+
+    min_positive_q = np.min(positive_q)
+    q_step = np.min(np.diff(np.sort(valid_q)))
+
+    if debugging:
+        print(f"Minimum positive q: {min_positive_q}")
+        print(f"Calculated q_step: {q_step}")
+
+    if q_step > 0:
+        num_nan = np.sum(np.isnan(q_values))
+        negative_q = np.arange(0, -num_nan * q_step, -q_step)[::-1]
+
+        new_q_values = np.full_like(q_values, np.nan)
+        new_q_values[:len(negative_q)] = negative_q
+        new_q_values[len(negative_q):] = valid_q
+
+        if debugging:
+            print(f"Generated new_q_values (first 10): {new_q_values[:10]}")
+            print(f"Generated new_q_values (last 10): {new_q_values[-10:]}")
+
+        find_zero_indices(q_values, new_q_values, debugging=debugging)
+
+        return new_q_values
+    else:
+        if debugging:
+            print("q_step is not positive, returning original q_values")
+        return q_values
+
+def plot_data_with_q_conversion(explist, exptitles, gauss_y, num_cols=2,
+                                q_min=None, q_max=None, E_min=None, E_max=None,
+                                figsize=(6, 5), title_fontsize=20, label_fontsize=14,
+                                cbar_pos=[0.92, 0.063, 0.02, 0.15], cmap='inferno',
+                                font_family='sans-serif', font_style='normal', font_weight='normal',
+                                num_ticks_x=5, num_ticks_y=5, tick_fontsize=12,
+                                apply_log=True):  # apply_log 플래그 추가
+    # gauss_y가 리스트로 되어 있다고 가정하고, E0 값들을 확인합니다.
+    print(f"Received E0 values: {gauss_y}")
+
+    # Set font properties
+    font_prop = fm.FontProperties(family=font_family, style=font_style, weight=font_weight)
+
+    num_subplots = len(explist)
+    num_rows = (num_subplots + num_cols - 1) // num_cols
+
+    fig_width, fig_height = figsize
+    fig, axs = plt.subplots(num_rows, num_cols, figsize=(fig_width*num_cols, fig_height*num_rows))
+    if num_subplots > 1:
+        axs = axs.flatten()
+    else:
+        axs = [axs]
+
+    plt.subplots_adjust(hspace=0.05, wspace=0.05)
+
+    for i, (df, title) in enumerate(zip(explist, exptitles)):
+        Z = df.values
+        
+        # 로그 변환이 적용되지 않은 경우에만 수행
+        if apply_log:
+            Z = np.log1p(Z)  # Optional log transformation
+
+        angles = df.columns.astype(float) * np.pi / 180  # Convert angles to radians
+        energy_losses = df.index.astype(float)  # Energy Loss in eV
+
+        # E0 값이 제대로 설정되어 있는지 확인합니다.
+        E0 = gauss_y[i]  # 리스트에서 값을 가져옵니다.
+        if E0 is None or E0 <= 0:
+            raise ValueError(f"Invalid E0 value: {E0} for experiment {title}")
+
+        q_values = np.array([angle_to_q(angle, E0, 0) for angle in angles])
+
+        processed_q_values = process_q_values(q_values)
+
+        # Set extent with validation
+        q_min_plot = q_min if q_min is not None else np.nanmin(processed_q_values)
+        q_max_plot = q_max if q_max is not None else np.nanmax(processed_q_values)
+        E_min_plot = E_min if E_min is not None else np.nanmin(energy_losses)
+        E_max_plot = E_max if E_max is not None else np.nanmax(energy_losses)
+
+        # Check for NaN or Inf and replace with default values
+        if np.isnan(q_min_plot) or np.isinf(q_min_plot):
+            q_min_plot = 0
+        if np.isnan(q_max_plot) or np.isinf(q_max_plot):
+            q_max_plot = 1
+        if np.isnan(E_min_plot) or np.isinf(E_min_plot):
+            E_min_plot = 0
+        if np.isnan(E_max_plot) or np.isinf(E_max_plot):
+            E_max_plot = 1
+
+        extent = [q_min_plot, q_max_plot, E_min_plot, E_max_plot]
+
+        ax = axs[i]
+        im = ax.imshow(Z, aspect='auto', origin='lower', extent=extent, cmap=cmap)
+
+        ax.set_title(f"{title}, E0 = {E0:.6f} eV", fontsize=title_fontsize, fontproperties=font_prop)
+        ax.set_xlabel('q (Å⁻¹)', fontsize=label_fontsize, fontproperties=font_prop)
+        ax.set_ylabel('Energy Loss (eV)', fontsize=label_fontsize, fontproperties=font_prop)
+
+        # Set font properties for axis labels
+        for label in ax.get_xticklabels() + ax.get_yticklabels():
+            label.set_fontproperties(font_prop)
+
+        ax.tick_params(axis='both', which='major', labelsize=tick_fontsize)
+
+    # Remove unused subplots
+    for j in range(num_subplots, len(axs)):
+        fig.delaxes(axs[j])
+
+    # Colorbar
+    cbar_ax = fig.add_axes(cbar_pos)
+    cbar = fig.colorbar(im, cax=cbar_ax, orientation='vertical')
+    cbar.ax.tick_params(labelsize=label_fontsize)
+    for label in cbar.ax.get_yticklabels():
+        label.set_fontproperties(font_prop)
+
+    plt.tight_layout(rect=[0, 0, 0.9, 1])
+    
+    img_bytes = BytesIO()
+    plt.savefig(img_bytes, format='png')
+    plt.close()
+    img_bytes.seek(0)
+
+    return img_bytes, explist
+
