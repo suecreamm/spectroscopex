@@ -1,7 +1,10 @@
 import numpy as np
 import pandas as pd
 from plotter import create_plot
-import base64
+import os
+from flask import url_for
+import uuid
+from utils import save_image 
 
 def flip_ud(df, change_sign=True):
     flipped_df = df.iloc[::-1]
@@ -45,7 +48,9 @@ def transform_data(explist, action):
         transformed_explist.append(transformed_df)
     return transformed_explist
 
-def get_transformed_plot(explist, exptitles):
-    img_bytes = create_plot(explist, exptitles)
-    img_base64 = base64.b64encode(img_bytes.getvalue()).decode('utf-8')
-    return f'data:image/png;base64,{img_base64}'
+
+def get_transformed_plot(explist, exptitles, apply_log=True):
+    img_bytes = create_plot(explist, exptitles, apply_log=apply_log)
+    img_url = save_image(img_bytes.getvalue(), 'transformed_plot.png')
+    return img_url
+

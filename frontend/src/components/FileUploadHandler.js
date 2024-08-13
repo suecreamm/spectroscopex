@@ -12,12 +12,14 @@ export function initializeFileUploadHandler() {
         savePreviewBtn: document.getElementById('savePreviewBtn'),
         saveXProfileBtn: document.getElementById('saveXProfileBtn'),
         saveYProfileBtn: document.getElementById('saveYProfileBtn'),
-        exportCSVBtn: document.getElementById('exportCSVBtn')
+        exportCSVBtn: document.getElementById('exportCSVBtn'),
+        qEnergyLossCheckbox: document.getElementById('q-energyloss')
     };
 
     let lastUploadedData = null;
     let initialUploadedData = null;
     let updateTransformImage = null;
+    let isQEnergyLossEnabled = false; // q-Energy Loss 상태를 저장
 
     if (Object.values(elements).some(element => !element)) {
         console.error('One or more required elements not found');
@@ -45,10 +47,23 @@ export function initializeFileUploadHandler() {
         if (elements.exportCSVBtn) {
             elements.exportCSVBtn.addEventListener('click', exportCSVFiles);
         }
+
+        // q-Energy Loss 체크박스 변경 시 상태 업데이트
+        if (elements.qEnergyLossCheckbox) {
+            elements.qEnergyLossCheckbox.addEventListener('change', handleQEnergyLossChange);
+        }
+    }
+
+    function handleQEnergyLossChange() {
+        isQEnergyLossEnabled = elements.qEnergyLossCheckbox.checked;
+        console.log(`q - Energy Loss enabled: ${isQEnergyLossEnabled}`);
+        if (isQEnergyLossEnabled) {
+            handleFileUpload(); // 파일 업로드를 다시 실행하여 데이터 업데이트
+        }
     }
 
     async function handleFileUpload(event) {
-        const files = event.target.files;
+        const files = event ? event.target.files : elements.fileInput.files;
         if (files.length === 0) {
             updateUploadMessage('No files selected');
             return;
@@ -63,6 +78,11 @@ export function initializeFileUploadHandler() {
             if (!defaultSaveDir && filePath.includes('/')) {
                 defaultSaveDir = filePath.substring(0, filePath.lastIndexOf('/'));
             }
+        }
+
+        // q-Energyloss 체크 여부를 formData에 추가
+        if (isQEnergyLossEnabled) {
+            formData.append('q_energyloss', 'true');
         }
 
         try {
@@ -85,6 +105,12 @@ export function initializeFileUploadHandler() {
             lastUploadedData.defaultSaveDir = defaultSaveDir;
             updatePreviewImage(data.image);
             updateProfilePlots(data.profiles);
+
+            // q 변환 플롯이 반환된 경우, 이를 UI에 표시
+            if (data.q_plot) {
+                updatePreviewImage(data.q_plot);
+            }
+
             if (updateTransformImage) {
                 updateTransformImage(data.image);
             }
@@ -110,7 +136,7 @@ export function initializeFileUploadHandler() {
 
     function updateProfilePlot(profileData, plotElement, saveBtnId) {
         if (profileData && profileData.image) {
-            plotElement.src = `data:image/png;base64,${profileData.image}`;
+            plotElement.src = profileData.image;
             plotElement.style.display = "block";
             document.getElementById(saveBtnId).style.display = 'inline-block';
         }
@@ -151,12 +177,12 @@ export function initializeFileUploadHandler() {
         const isXProfile = axis === 'x';
         const profileTab = isXProfile ? elements.xProfileTab : elements.yProfileTab;
         const profilePlot = isXProfile ? elements.xProfilePlot : elements.yProfilePlot;
-
+    
         if (elements.viewAllBtn.classList.contains('active') && profileTab.classList.contains('active')) {
             if (lastUploadedData && lastUploadedData.profiles) {
                 const profileData = isXProfile ? lastUploadedData.profiles.x_profile : lastUploadedData.profiles.y_profile;
                 if (profileData && profileData.image) {
-                    profilePlot.src = `data:image/png;base64,${profileData.image}`;
+                    profilePlot.src = profileData.image;  // URL 사용
                     profilePlot.style.display = "block";
                 } else {
                     console.error(`No ${axis.toUpperCase()}-profile image data available`);
@@ -167,6 +193,7 @@ export function initializeFileUploadHandler() {
             }
         }
     }
+    
 
     function saveImage(imageElement, fileName) {
         if (imageElement.src.startsWith('data:image')) {
@@ -235,18 +262,28 @@ export function initializeFileUploadHandler() {
         }
     }
 
-    async function transformImage(action) {
+    async function transformImage(action, qEnergyLossEnabled) {
         try {
             console.log('Transforming image:', action);
-            const response = await window.electron.transformImage(action);
-            console.log('Transform response:', response);
-            if (response.success && response.image) {
-                if (updateTransformImage) {
-                    updateTransformImage(response.image);
-                }
-                return { success: true, image: response.image };
+            const response = await fetch('http://localhost:7654/transform', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: action,
+                    q_energy_loss_enabled: qEnergyLossEnabled  // q 변환 상태 전달
+                }),
+                mode: 'cors',
+            });
+    
+            if (!response.ok) {
+                throw new Error(`Server error ${response.status}: ${response.statusText}`);
+            }
+    
+            const data = await response.json();
+            if (data.success) {
+                return { success: true, image: data.image };
             } else {
-                throw new Error(response.error || 'Unknown error occurred');
+                throw new Error(data.error || 'Unknown error occurred');
             }
         } catch (error) {
             console.error('Error in transformImage:', error);
@@ -255,7 +292,11 @@ export function initializeFileUploadHandler() {
     }
 
     function updateUploadMessage(message) {
-        elements.uploadMessage.textContent = message;
+        if (elements.uploadMessage) {
+            elements.uploadMessage.textContent = message;
+        } else {
+            console.error('Upload message element not found');
+        }
     }
 
     return {
@@ -280,6 +321,7 @@ export function initializeFileUploadHandler() {
         },
         saveImage,
         exportCSVFiles,
-        transformImage
+        transformImage,
+        isQEnergyLossEnabled: () => isQEnergyLossEnabled 
     };
 }
