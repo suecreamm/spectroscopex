@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from plotter import create_plot
+from plotter import create_plot, plot_data_with_q_conversion
 import os
 from flask import url_for
 import uuid
@@ -30,8 +30,16 @@ def rotate_90(df, direction='ccw', change_sign=True):
             rotated_df.columns = -rotated_df.columns
     return rotated_df
 
-def transform_data(explist, action):
+
+def transform_data(explist, action, exptitles=None, gauss_y=None):
     transformed_explist = []
+    if action == 'q_conversion':
+        if exptitles is None or gauss_y is None:
+            raise ValueError("exptitles and gauss_y must be provided for q_conversion")
+        # q_conversion을 위한 처리
+        transformed_explist, img_bytes = plot_data_with_q_conversion(explist, exptitles, gauss_y)
+        return transformed_explist, img_bytes
+    
     for df in explist:
         if action == 'flip_ud':
             transformed_df = flip_ud(df)
@@ -46,6 +54,7 @@ def transform_data(explist, action):
         else:
             raise ValueError(f"Unknown action: {action}")
         transformed_explist.append(transformed_df)
+    
     return transformed_explist
 
 
@@ -53,4 +62,3 @@ def get_transformed_plot(explist, exptitles, apply_log=True):
     img_bytes = create_plot(explist, exptitles, apply_log=apply_log)
     img_url = save_image(img_bytes.getvalue(), 'transformed_plot.png')
     return img_url
-
