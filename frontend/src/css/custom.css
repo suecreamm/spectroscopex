@@ -152,79 +152,43 @@ h1, h2, h3, h4, h5, h6, .title, .btn, .button {
 }
 
 
-
 #qPlotImage {
   max-width: 100%;
   height: auto;
   display: none;
 }
 
+#resetBtn {
+  width: 36px;
+  height: 36px;  
+  background-color: transparent;
+  margin-left: auto;
+  transition: background-color 0.3s ease, transform 0.3s ease, color 0.3s ease;
+}
 
-
-#transform .subtab-action-button {
+#flipUdBtn, #flipLrBtn, #rotateCcw90Btn, #rotateCw90Btn {
   width: 36px;
   height: 36px;
   transition: background-color 0.3s ease, transform 0.3s ease, color 0.3s ease;
 }
 
-#resetBtn {
-  background-color: transparent;
-  color: #555;
-  margin-left: auto;
+#flipUdBtn img, #flipLrBtn img, #rotateCcw90Btn img, #rotateCw90Btn img {
+  width: 20px;
+  height: 20px;
+  transform: scale(1.2);
 }
 
-#moveToOriginBtn:hover {
+#flipUdBtn:hover, #flipLrBtn:hover, #rotateCcw90Btn:hover, #rotateCw90Btn:hover {
   background-color: #555;
-  transform: scale(1.1);
 }
 
-#moveToOriginBtn:hover img {
-  filter: invert(1) brightness(2); /* 색상 반전을 통해 흰색으로 변경 */
-}
-
-#flipUdBtn:hover {
-  background-color: #555;
-  transform: scale(1.1);
-}
-
-#flipUdBtn:hover img {
-  filter: invert(1) brightness(2); /* 색상 반전을 통해 흰색으로 변경 */
-}
-
-#flipLrBtn:hover {
-  background-color: #555;
-  transform: scale(1.1);
-}
-
-#flipLrBtn:hover img {
-  filter: invert(1) brightness(2);
-}
-
-#rotateCcw90Btn:hover {
-  background-color: #555;
-  transform: scale(1.1);
-}
-
-#rotateCcw90Btn:hover img {
-  filter: invert(1) brightness(2);
-}
-
-#rotateCw90Btn:hover {
-  background-color: #555;
-  transform: scale(1.1);
-}
-
-#rotateCw90Btn:hover img {
+#flipUdBtn:hover img, #flipLrBtn:hover img, #rotateCcw90Btn:hover img, #rotateCw90Btn:hover img,
+#resetBtn:hover img {
   filter: invert(1) brightness(2);
 }
 
 #resetBtn:hover {
   background-color: red;
-  color: white;
-}
-
-#resetBtn:hover img {
-  filter: invert(1) brightness(2);
 }
 
 /* Navigation Buttons */

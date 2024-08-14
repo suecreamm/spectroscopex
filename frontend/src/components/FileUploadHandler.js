@@ -1,3 +1,5 @@
+// FileUploadHandler.js
+
 export function initializeFileUploadHandler() {
     const elements = {
         fileInput: document.getElementById('fileInput'),
@@ -13,13 +15,18 @@ export function initializeFileUploadHandler() {
         saveXProfileBtn: document.getElementById('saveXProfileBtn'),
         saveYProfileBtn: document.getElementById('saveYProfileBtn'),
         exportCSVBtn: document.getElementById('exportCSVBtn'),
-        qEnergyLossCheckbox: document.getElementById('q-energyloss')
+        qEnergyLossCheckbox: document.getElementById('q-energyloss'),
+        flipUdBtn: document.getElementById('flipUdBtn'),
+        flipLrBtn: document.getElementById('flipLrBtn'),
+        rotateCcw90Btn: document.getElementById('rotateCcw90Btn'),
+        rotateCw90Btn: document.getElementById('rotateCw90Btn'),
+        resetBtn: document.getElementById('resetBtn')
     };
 
     let lastUploadedData = null;
     let initialUploadedData = null;
     let updateTransformImage = null;
-    let isQEnergyLossEnabled = false; // q-Energy Loss 상태를 저장
+    let isQEnergyLossEnabled = false;
 
     if (Object.values(elements).some(element => !element)) {
         console.error('One or more required elements not found');
@@ -52,6 +59,13 @@ export function initializeFileUploadHandler() {
         if (elements.qEnergyLossCheckbox) {
             elements.qEnergyLossCheckbox.addEventListener('change', handleQEnergyLossChange);
         }
+
+        // Transform 버튼 이벤트 리스너
+        elements.flipUdBtn.addEventListener('click', () => sendTransformRequest('flip_ud'));
+        elements.flipLrBtn.addEventListener('click', () => sendTransformRequest('flip_lr'));
+        elements.rotateCcw90Btn.addEventListener('click', () => sendTransformRequest('rotate_ccw90'));
+        elements.rotateCw90Btn.addEventListener('click', () => sendTransformRequest('rotate_cw90'));
+        elements.resetBtn.addEventListener('click', handleReset);
     }
 
     function handleQEnergyLossChange() {
@@ -108,7 +122,7 @@ export function initializeFileUploadHandler() {
 
             // q 변환 플롯이 반환된 경우, 이를 UI에 표시
             if (data.q_plot) {
-                updatePreviewImage(data.q_plot);
+                updatePreviewImage(data.q_plot, 'qPlotImage');
             }
 
             if (updateTransformImage) {
@@ -122,11 +136,10 @@ export function initializeFileUploadHandler() {
         }
     }
 
-    function updatePreviewImage(imageUrl) {
-        elements.previewImage.src = imageUrl;
-        elements.previewImage.alt = "Plot Image";
-        elements.previewImage.style.display = "block";
-        elements.previewImage.style.margin = "0 auto";
+    function updatePreviewImage(imageUrl, targetId = 'previewImage') {
+        const imgElement = document.getElementById(targetId);
+        imgElement.src = imageUrl;
+        imgElement.style.display = 'block';
     }
 
     function updateProfilePlots(profiles) {
@@ -182,7 +195,7 @@ export function initializeFileUploadHandler() {
             if (lastUploadedData && lastUploadedData.profiles) {
                 const profileData = isXProfile ? lastUploadedData.profiles.x_profile : lastUploadedData.profiles.y_profile;
                 if (profileData && profileData.image) {
-                    profilePlot.src = profileData.image;  // URL 사용
+                    profilePlot.src = profileData.image;
                     profilePlot.style.display = "block";
                 } else {
                     console.error(`No ${axis.toUpperCase()}-profile image data available`);
@@ -270,7 +283,7 @@ export function initializeFileUploadHandler() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: action,
-                    q_energy_loss_enabled: qEnergyLossEnabled  // q 변환 상태 전달
+                    q_energy_loss_enabled: qEnergyLossEnabled
                 }),
                 mode: 'cors',
             });
@@ -289,6 +302,26 @@ export function initializeFileUploadHandler() {
             console.error('Error in transformImage:', error);
             throw error;
         }
+    }
+
+    function sendTransformRequest(action) {
+        const qEnergyLossEnabled = isQEnergyLossEnabled;
+        fileUploadHandler.updateUploadMessage('Transforming image...');
+        return transformImage(action, qEnergyLossEnabled)
+            .then(response => {
+                if (response.success) {
+                    updateTransformImage(response.image);
+                    updateUploadMessage('Image transformed successfully.');
+                }
+            })
+            .catch(error => {
+                updateUploadMessage(`Transform failed: ${error.message}`);
+            });
+    }
+
+    function handleReset() {
+        const qEnergyLossEnabled = isQEnergyLossEnabled;
+        sendTransformRequest('reset', qEnergyLossEnabled);
     }
 
     function updateUploadMessage(message) {
