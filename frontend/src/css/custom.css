@@ -152,11 +152,7 @@ h1, h2, h3, h4, h5, h6, .title, .btn, .button {
 }
 
 
-#qPlotImage {
-  max-width: 100%;
-  height: auto;
-  display: none;
-}
+
 
 #resetBtn {
   width: 36px;
@@ -264,7 +260,6 @@ h1, h2, h3, h4, h5, h6, .title, .btn, .button {
   display: block;
 }
 
-/* 이미지 반응형 스타일 추가 */
 #previewImage, #x_profile_plot, #y_profile_plot {
   max-width: 100%;
   height: auto;

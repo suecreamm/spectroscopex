@@ -8,7 +8,6 @@ from io import BytesIO
 
 plt.switch_backend('Agg')
 
-
 def gaussian(x, a, x0, sigma):
     return a * np.exp(-(x - x0) ** 2 / (2 * sigma ** 2))
 
@@ -20,7 +19,6 @@ def convert_to_float(value):
         return float(value)
     except ValueError:
         return value
-
 
 def create_plot(explist, exptitles, save2D=True, num_xticks=5, num_yticks=5, num_cols=2, apply_log=True):
     num_subplots = len(explist)
@@ -46,7 +44,7 @@ def create_plot(explist, exptitles, save2D=True, num_xticks=5, num_yticks=5, num
         Z = df.values
         
         # 로그 변환을 적용할지 여부를 결정
-        if apply_log:
+        if apply_log and np.issubdtype(Z.dtype, np.number):
             Z = np.log1p(Z)
         
         x = df.columns.astype(float)
@@ -77,7 +75,6 @@ def create_plot(explist, exptitles, save2D=True, num_xticks=5, num_yticks=5, num
     img_bytes.seek(0)
 
     return img_bytes
-
 
 def plot_x_profiles(explist, exptitles, method='mean', col_nums=4, plot=False):
     num_dfs = len(explist)
@@ -134,7 +131,6 @@ def plot_x_profiles(explist, exptitles, method='mean', col_nums=4, plot=False):
 
     return gauss_peak_x, lorentz_peak_x
 
-
 def plot_y_profiles(explist, exptitles, method='mean', col_nums=4, plot=False):
     num_dfs = len(explist)
     row_nums = math.ceil(num_dfs / col_nums)
@@ -184,7 +180,6 @@ def plot_y_profiles(explist, exptitles, method='mean', col_nums=4, plot=False):
 
     return gauss_peak_y, lorentz_peak_y
 
-
 def origin_dataframes(explist, peak_x, peak_y, exptitles, save=False, filename=None):
     import os
 
@@ -232,7 +227,6 @@ def origin_dataframes(explist, peak_x, peak_y, exptitles, save=False, filename=N
 
     return shifted_explist
 
-
 def shift_and_preview(explist, exptitles, plot=True):
     gauss_peak_x_mean, _ = plot_x_profiles(explist, exptitles, method='mean', col_nums=4)
     gauss_peak_y_mean, _ = plot_y_profiles(explist, exptitles, method='mean', col_nums=4)
@@ -244,7 +238,6 @@ def shift_and_preview(explist, exptitles, plot=True):
         img_bytes = create_plot(explist_shifted_gauss, exptitles)
 
     return gauss_peak_x_mean, gauss_peak_y_mean, explist_shifted_gauss, img_bytes
-
 
 def angle_to_q(angle, E0, E_loss):
     if E_loss < 0 or angle < 0:
@@ -322,7 +315,7 @@ def plot_data_with_q_conversion(explist, exptitles, gauss_y, num_cols=2,
                                 font_family='sans-serif', font_style='normal', font_weight='normal',
                                 num_ticks_x=5, num_ticks_y=5, tick_fontsize=12,
                                 apply_log=True):  # apply_log 플래그 추가
-    # gauss_y가 리스트로 되어 있다고 가정하고, E0 값들을 확인합니다.
+    
     print(f"Received E0 values: {gauss_y}")
 
     # Set font properties
@@ -343,14 +336,12 @@ def plot_data_with_q_conversion(explist, exptitles, gauss_y, num_cols=2,
     for i, (df, title) in enumerate(zip(explist, exptitles)):
         Z = df.values
         
-        # 로그 변환이 적용되지 않은 경우에만 수행
-        if apply_log:
+        if apply_log and np.issubdtype(Z.dtype, np.number):
             Z = np.log1p(Z)  # Optional log transformation
 
         angles = df.columns.astype(float) * np.pi / 180  # Convert angles to radians
         energy_losses = df.index.astype(float)  # Energy Loss in eV
 
-        # E0 값이 제대로 설정되어 있는지 확인합니다.
         E0 = gauss_y[i]  # 리스트에서 값을 가져옵니다.
         if E0 is None or E0 <= 0:
             raise ValueError(f"Invalid E0 value: {E0} for experiment {title}")
@@ -409,4 +400,3 @@ def plot_data_with_q_conversion(explist, exptitles, gauss_y, num_cols=2,
     img_bytes.seek(0)
 
     return img_bytes, explist
-
