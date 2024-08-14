@@ -72,9 +72,6 @@
                                             <div class="tab" data-content="y_profile">
                                                 <i class="fa-solid fa-y"></i> Y-Profile
                                             </div>
-                                            <div class="tab" data-content="transform">
-                                                <i class="fa-solid fa-wrench"></i> Transform
-                                            </div>
                                         </div>
 
                                         <div class="tab-action-buttons">
@@ -92,6 +89,24 @@
                                                 <div class="col-6 col-12-small">
                                                         <input type="checkbox" id="dataframetoOriginToggle" checked>
                                                         <label for="dataframetoOriginToggle">Dataframe to Origin </label>
+                                                </div>
+                                            </div>
+
+                                            <div class="subtab-action-buttons">
+                                                <div class="subtab-action-button" id="flipUdBtn">
+                                                    <img src="assets/icons/flipUD.svg" alt="Flip Up-Down" />
+                                                </div>
+                                                <div class="subtab-action-button" id="flipLrBtn">
+                                                    <img src="assets/icons/flipLR.svg" alt="Flip Left-Right" />
+                                                </div>
+                                                <div class="subtab-action-button" id="rotateCcw90Btn">
+                                                    <img src="assets/icons/rotateCCW.svg" alt="Rotate CCW 90 degree" />
+                                                </div>
+                                                <div class="subtab-action-button" id="rotateCw90Btn">
+                                                    <img src="assets/icons/rotateCW.svg" alt="Rotate CW 90 degree" />
+                                                </div>
+                                                <div class="subtab-action-button" id="resetBtn">
+                                                    <img src="assets/icons/reset.svg" alt="Reset" />
                                                 </div>
                                             </div>
                                             
@@ -137,37 +152,6 @@
                                                     <button id="saveYProfileBtn" class="save-button primary"><i class="fa-solid fa-download"></i> Save Image</button>
                                                 </div>
                                                 
-                                            </div>
-                                        </div>
-                                        <div class="tabPanel" id="transform">
-                                            <div class="subtab-action-buttons">
-                                                <div class="subtab-action-button" id="flipUdBtn">
-                                                    <img src="assets/icons/flipUD.svg" alt="Flip Up-Down" />
-                                                </div>
-                                                <div class="subtab-action-button" id="flipLrBtn">
-                                                    <img src="assets/icons/flipLR.svg" alt="Flip Left-Right" />
-                                                </div>
-                                                <div class="subtab-action-button" id="rotateCcw90Btn">
-                                                    <img src="assets/icons/rotateCCW.svg" alt="Rotate CCW 90 degree" />
-                                                </div>
-                                                <div class="subtab-action-button" id="rotateCw90Btn">
-                                                    <img src="assets/icons/rotateCW.svg" alt="Rotate CW 90 degree" />
-                                                </div>
-                                                <div class="subtab-action-button" id="resetBtn">
-                                                    <img src="assets/icons/reset.svg" alt="Reset" />
-                                                </div>
-                                            </div>
-
-                                            <div class="image-container">
-                                                <img id="transformImage" alt="Transformed Image" style="display:none;">
-                                            </div>
-                                            <div class="button-container">
-                                                <button id="saveTransformImageBtn" class="save-button primary">
-                                                    <i class="fa-solid fa-image"></i> Save Image
-                                                </button>
-                                                <button id="exportTransformCSVBtn" class="save-button">
-                                                    <i class="fa-solid fa-floppy-disk"></i> Export CSV
-                                                </button>
                                             </div>
                                         </div>
 
