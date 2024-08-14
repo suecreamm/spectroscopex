@@ -40,6 +40,16 @@ export function initializeFileUploadHandler() {
         }
     }
 
+    function handleQEnergyLossChange() {
+        isQEnergyLossEnabled = elements.qEnergyLossCheckbox.checked;
+        console.log(`q - Energy Loss enabled: ${isQEnergyLossEnabled}`);
+        if (isQEnergyLossEnabled) {
+            requestQPlot();  // Q-Energy Loss 활성화 시 q 변환된 플롯을 요청
+        } else {
+            togglePlotVisibility();  // 비활성화 시 일반 preview 이미지 표시
+        }
+    }
+
     initializeEventListeners();
 
     function initializeEventListeners() {
@@ -74,16 +84,6 @@ export function initializeFileUploadHandler() {
         elements.resetBtn.addEventListener('click', () => sendTransformRequest('reset'));
     }
 
-    function handleQEnergyLossChange() {
-        isQEnergyLossEnabled = elements.qEnergyLossCheckbox.checked;
-        console.log(`q - Energy Loss enabled: ${isQEnergyLossEnabled}`);
-        if (isQEnergyLossEnabled) {
-            requestQPlot();  // Q-Energy Loss 활성화 시 q 변환된 플롯을 요청
-        } else {
-            togglePlotVisibility();  // 비활성화 시 일반 preview 이미지 표시
-        }
-    }
-
     async function handleFileUpload(event) {
         console.log('handleFileUpload called.');
         const files = event ? event.target.files : elements.fileInput.files;
@@ -92,19 +92,19 @@ export function initializeFileUploadHandler() {
             updateUploadMessage('No files selected');
             return;
         }
-
+    
         const formData = new FormData();
-
+    
         for (const file of files) {
             console.log(`Appending file: ${file.name}`);
             formData.append('filePaths', file, file.name);
         }
-
+    
         if (isQEnergyLossEnabled) {
             console.log('Appending q_energyloss to form data.');
             formData.append('q_energyloss', 'true');
         }
-
+    
         try {
             updateUploadMessage('Uploading files...');
             console.log('Uploading files to server...');
@@ -113,11 +113,11 @@ export function initializeFileUploadHandler() {
                 body: formData,
                 mode: 'cors',
             });
-
+    
             if (!response.ok) {
                 throw new Error(`Server error ${response.status}: ${response.statusText}`);
             }
-
+    
             const data = await response.json();
             console.log('Files uploaded successfully.');
             lastUploadedData = data;
@@ -125,23 +125,24 @@ export function initializeFileUploadHandler() {
                 initialUploadedData = JSON.parse(JSON.stringify(data));
                 console.log('Initial uploaded data stored.');
             }
-
+    
             updateProfilePlots(data.profiles);
-
+            
+            // 파일 업로드 후 바로 이미지 업데이트
+            updatePreviewImage(data.image);
+    
             // 파일 업로드 후 자동으로 Q-Energy Loss 플롯 요청
             if (isQEnergyLossEnabled) {
-                requestQPlot();  // Q-Energy Loss가 활성화된 경우 q plot 요청
-            } else {
-                togglePlotVisibility();  // 비활성화 상태에서는 일반 preview 이미지 표시
+                await requestQPlot();  // Q-Energy Loss가 활성화된 경우 q plot 요청
             }
-
+    
             updateUploadMessage('Files uploaded and processed successfully.');
         } catch (error) {
             console.error('Failed to upload and process the file:', error);
             updateUploadMessage(`Failed to upload and process the file: ${error.message}`);
         }
     }
-
+    
     async function requestQPlot() {
         try {
             const payload = {
@@ -163,39 +164,37 @@ export function initializeFileUploadHandler() {
             }
     
             const data = await response.json();
-            return data;
+            console.log('Q-Plot received and updating image.');
+            
+            // Q-Plot을 받아오면 바로 업데이트
+            if (data.image) {
+                updatePreviewImage(data.image);
+            }
+            
         } catch (error) {
             console.error('Failed to retrieve Q-Plot:', error);
         }
     }
-
     
     function updatePreviewImage(imageUrl) {
         const imgElement = document.getElementById('previewImage');
-        if (imageUrl) {
-            imgElement.src = imageUrl;
-            imgElement.style.display = 'block';
-            console.log(`Updating preview image with URL: ${imageUrl}`);
-        } else {
-            imgElement.style.display = 'none';
-            console.warn('No image URL provided to updatePreviewImage');
-        }
+        imgElement.src = imageUrl;
+        imgElement.style.display = 'block';  // 이미지를 표시
+        console.log(`Updating preview image with URL: ${imageUrl}`);
     }
-    
-    
+
     function togglePlotVisibility() {
         console.log('Toggling plot visibility');
         if (isQEnergyLossEnabled && lastUploadedData.q_plot) {
             console.log('Displaying Q-Plot');
-            updatePreviewImage(lastUploadedData.q_plot);  // Q-Plot 이미지를 표시
+            updatePreviewImage(lastUploadedData.q_plot);  // previewImage를 Q-Plot으로 교체
         } else if (lastUploadedData.image) {
             console.log('Displaying preview image');
-            updatePreviewImage(lastUploadedData.image);  // 일반 플롯 이미지를 표시
+            updatePreviewImage(lastUploadedData.image);  // previewImage를 일반 플롯으로 교체
         } else {
             console.warn('No image data available to display');
         }
     }
-    
 
     function loadImage() {
         console.log('loadImage called.');
@@ -283,7 +282,6 @@ export function initializeFileUploadHandler() {
             console.error("Error in sendTransformRequest:", error);
         }
     }
-    
 
     function handleReset() {
         if (!lastUploadedData) {
