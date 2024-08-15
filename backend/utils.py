@@ -2,6 +2,7 @@ import yaml
 import os
 import uuid
 from flask import url_for
+import logging
 
 
 def load_config():
@@ -9,11 +10,17 @@ def load_config():
         return yaml.safe_load(config_file)
     
 
-def save_image(image_bytes, filename):
-    """이미지를 static/images 디렉토리에 저장하고 URL을 반환하는 함수"""
-    unique_filename = f"{uuid.uuid4()}_{filename}"
-    image_path = os.path.join('static', 'images', unique_filename)
-    os.makedirs(os.path.dirname(image_path), exist_ok=True)
-    with open(image_path, 'wb') as img_file:
-        img_file.write(image_bytes)
-    return url_for('static', filename=f'images/{unique_filename}', _external=True)
+def save_image(image_data, filename):
+    save_dir = os.path.join(os.getcwd(), 'static', 'images')
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+        logging.debug(f"Created directory: {save_dir}")
+
+    file_path = os.path.join(save_dir, filename)
+    
+    with open(file_path, 'wb') as f:
+        f.write(image_data)
+        logging.debug(f"Image saved to {file_path}")
+
+    return f'/static/images/{filename}'
+

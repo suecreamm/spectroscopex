@@ -1,5 +1,6 @@
 import os
 import logging
+from io import BytesIO
 import traceback
 from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
@@ -12,6 +13,9 @@ from utils import save_image
 import pandas as pd
 
 main_bp = Blueprint('main', __name__)
+
+last_valid_explist = None
+last_valid_exptitles = None
 
 def save_file_to_directory(file, directory, filename):
     save_dir = os.path.abspath(directory)
@@ -84,22 +88,40 @@ def upload_directory():
 
 @main_bp.route('/transform', methods=['POST'])
 def transform():
+    global last_valid_explist, last_valid_exptitles
+
     try:
         action = request.json['action']
-        explist = [pd.DataFrame(df) for df in request.json['explist']]  # JSON으로부터 DataFrame을 재생성
-        exptitles = request.json['exptitles']
-        gauss_y = request.json['gauss_peak_y_mean']
+        explist = [pd.DataFrame(df) for df in request.json['explist']] if 'explist' in request.json else None
+        exptitles = request.json.get('exptitles', None)
+        gauss_y = request.json.get('gauss_peak_y_mean', None)
 
-        if action == 'reset':
-            transformed_explist = explist
-            plot_image_bytes = get_transformed_plot(transformed_explist, exptitles)
-        elif action == 'q_conversion':
+        q_energy_loss_enabled = request.json.get('q_energy_loss_enabled', False)
+
+        logging.debug(f"Received action: {action}")
+        logging.debug(f"Received explist: {explist}")
+        logging.debug(f"Received exptitles: {exptitles}")
+        logging.debug(f"Received gauss_y: {gauss_y}")
+        logging.debug(f"Q-Energy Loss Enabled: {q_energy_loss_enabled}")
+
+        if not explist or not exptitles:
+            logging.warning("explist or exptitles is empty or None, using last valid data.")
+            if last_valid_explist is None or last_valid_exptitles is None:
+                raise ValueError("No valid explist or exptitles available to fallback on.")
+            explist = last_valid_explist
+            exptitles = last_valid_exptitles
+
+        if q_energy_loss_enabled:
             plot_image_bytes, transformed_explist = plot_data_with_q_conversion(explist, exptitles, gauss_y)
         else:
-            transformed_explist = transform_data(explist, action)
-            plot_image_bytes = get_transformed_plot(transformed_explist, exptitles)
+            transformed_explist, plot_image_bytes = transform_data(explist, action, exptitles, gauss_y)
 
         plot_image_url = save_image(plot_image_bytes.getvalue(), 'transformed_plot.png')
+
+        logging.debug(f"Generated plot image URL: {plot_image_url}")
+
+        last_valid_explist = transformed_explist
+        last_valid_exptitles = exptitles
 
         return jsonify({'success': True, 'image': plot_image_url})
 
@@ -108,6 +130,7 @@ def transform():
         logging.error(traceback.format_exc())
         return jsonify({'error': f'Server error: {str(e)}', 'traceback': traceback.format_exc()}), 500
 
+    
 
 @main_bp.route('/download-shifted-data', methods=['POST'])
 def download_shifted_data():

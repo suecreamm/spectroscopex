@@ -5,20 +5,24 @@ import matplotlib.pyplot as plt
 import math
 from scipy.optimize import curve_fit
 from io import BytesIO
+import logging
 
 plt.switch_backend('Agg')
 
+# Gaussian and Lorentzian functions
 def gaussian(x, a, x0, sigma):
     return a * np.exp(-(x - x0) ** 2 / (2 * sigma ** 2))
 
 def lorentzian(x, a, x0, gamma):
     return a * gamma ** 2 / ((x - x0) ** 2 + gamma ** 2)
 
+# Convert to float with error handling
 def convert_to_float(value):
     try:
         return float(value)
     except ValueError:
         return value
+
 
 def create_plot(explist, exptitles, save2D=True, num_xticks=5, num_yticks=5, num_cols=2, apply_log=True):
     num_subplots = len(explist)
@@ -40,10 +44,16 @@ def create_plot(explist, exptitles, save2D=True, num_xticks=5, num_yticks=5, num
     plt.subplots_adjust(hspace=0, wspace=0)
     im = None
 
+    # 디버깅: 데이터가 유효한지 확인
     for i, (df, title) in enumerate(zip(explist, exptitles)):
+        logging.debug(f"Creating plot for {title} with data shape: {df.shape}")
+
+        if df.empty:
+            logging.warning(f"DataFrame for {title} is empty, skipping plot.")
+            continue
+
         Z = df.values
         
-        # 로그 변환을 적용할지 여부를 결정
         if apply_log and np.issubdtype(Z.dtype, np.number):
             Z = np.log1p(Z)
         
@@ -64,17 +74,27 @@ def create_plot(explist, exptitles, save2D=True, num_xticks=5, num_yticks=5, num
         else:
             ax.set_xticklabels([])
 
-    cbar_ax = fig.add_axes([0.92, 0.063, 0.02, 0.15])
-    fig.colorbar(im, cax=cbar_ax, orientation='vertical')
+    if im is not None:
+        cbar_ax = fig.add_axes([0.92, 0.063, 0.02, 0.15])
+        fig.colorbar(im, cax=cbar_ax, orientation='vertical')
 
     plt.tight_layout(rect=[0, 0, 0.9, 1])
 
     img_bytes = BytesIO()
-    plt.savefig(img_bytes, format='png')
-    plt.close()
+    
+    try:
+        plt.savefig(img_bytes, format='png', bbox_inches='tight')
+        logging.debug("Image saved successfully.")
+    except Exception as e:
+        logging.error(f"Error saving image: {str(e)}")
+        raise
+    finally:
+        plt.close()
+
     img_bytes.seek(0)
 
     return img_bytes
+
 
 def plot_x_profiles(explist, exptitles, method='mean', col_nums=4, plot=False):
     num_dfs = len(explist)
@@ -307,6 +327,7 @@ def process_q_values(q_values, debugging=True):
         if debugging:
             print("q_step is not positive, returning original q_values")
         return q_values
+
 
 def plot_data_with_q_conversion(explist, exptitles, gauss_y, num_cols=2,
                                 q_min=None, q_max=None, E_min=None, E_max=None,
