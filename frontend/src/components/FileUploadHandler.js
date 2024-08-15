@@ -45,43 +45,46 @@ export function initializeFileUploadHandler() {
         const wasQEnergyLossEnabled = isQEnergyLossEnabled;
         isQEnergyLossEnabled = elements.qEnergyLossCheckbox.checked;
         console.log(`q - Energy Loss enabled: ${isQEnergyLossEnabled}`);
-
+    
         if (isQEnergyLossEnabled !== wasQEnergyLossEnabled) {
             qConversionPerformed = false;
         }
-
+    
         if (isQEnergyLossEnabled && !qConversionPerformed) {
-            await saveSessionData(); // 세션 데이터 저장
-            await requestQPlot(); 
-            qConversionPerformed = true;
+            try {
+                await saveSessionData(); // 세션 데이터 저장
+                await requestQPlot(); // Q-Plot 요청
+                qConversionPerformed = true;
+            } catch (error) {
+                console.error('Error during Q-Energy Loss processing:', error);
+                updateUploadMessage(`Q-Energy Loss processing failed: ${error.message}`);
+            }
         } else {
-            togglePlotVisibility();
+            togglePlotVisibility(); // 기존 이미지 표시
         }
     }
+    
 
     async function saveSessionData() {
         try {
+            const formData = new FormData();
+            formData.append('filePaths', new Blob([JSON.stringify(lastUploadedData.explist_shifted_gauss)], { type: 'application/json' }), 'data.json');
+            formData.append('q_energyloss', isQEnergyLossEnabled ? 'true' : 'false');
+    
             const response = await fetch('http://localhost:7654/upload-directory', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    explist_shifted_gauss: lastUploadedData.explist_shifted_gauss,
-                    exptitles: lastUploadedData.exptitles,
-                    gauss_peak_y_mean: lastUploadedData.gauss_peak_y_mean
-                })
+                body: formData,
             });
-
+    
             if (!response.ok) {
                 throw new Error(`Server error ${response.status}: ${response.statusText}`);
             }
-
-            const data = await response.json();
+    
             console.log('Session data saved successfully.');
-
         } catch (error) {
             console.error('Failed to save session data:', error);
         }
-    }
+    }    
 
     async function requestQPlot() {
         if (!lastUploadedData || !lastUploadedData.explist_shifted_gauss) {
@@ -89,7 +92,7 @@ export function initializeFileUploadHandler() {
             updateUploadMessage('No data available to generate Q-Plot.');
             return;
         }
-
+    
         try {
             const payload = {
                 action: 'q_conversion',
@@ -98,30 +101,31 @@ export function initializeFileUploadHandler() {
                 gauss_peak_y_mean: lastUploadedData.gauss_peak_y_mean,
                 q_energy_loss_enabled: true,
             };
-
+    
             const response = await fetch('http://localhost:7654/q-energyloss', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             });
-
+    
             if (!response.ok) {
                 throw new Error(`Server error ${response.status}: ${response.statusText}`);
             }
-
+    
             const data = await response.json();
             console.log('Q-Plot received and updating image.');
-
-            if (data.image) {
-                updatePreviewImage(data.image);
+    
+            if (data.q_plot) {
+                updatePreviewImage(data.q_plot);
                 lastUploadedData.explist = data.explist_q_converted || lastUploadedData.explist; 
             }
-
+    
         } catch (error) {
             console.error('Failed to retrieve Q-Plot:', error);
         }
-    }
-
+    }   
+    
+    
     function togglePlotVisibility() {
         console.log('Toggling plot visibility');
         if (isQEnergyLossEnabled && lastUploadedData.q_plot) {
@@ -193,49 +197,6 @@ export function initializeFileUploadHandler() {
         }
     }
 
-    async function handleXProfile() {
-        try {
-            const response = await fetch('http://localhost:7654/x-profile', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            });
-
-            if (!response.ok) {
-                throw new Error(`Server error ${response.status}: ${response.statusText}`);
-            }
-
-            const data = await response.json();
-            if (data.success) {
-                updateProfilePlot(data.image, elements.xProfilePlot, 'saveXProfileBtn');
-            } else {
-                console.error("Failed to generate X-Profile:", data.error);
-            }
-        } catch (error) {
-            console.error("Error in handleXProfile:", error);
-        }
-    }
-
-    async function handleYProfile() {
-        try {
-            const response = await fetch('http://localhost:7654/y-profile', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            });
-
-            if (!response.ok) {
-                throw new Error(`Server error ${response.status}: ${response.statusText}`);
-            }
-
-            const data = await response.json();
-            if (data.success) {
-                updateProfilePlot(data.image, elements.yProfilePlot, 'saveYProfileBtn');
-            } else {
-                console.error("Failed to generate Y-Profile:", data.error);
-            }
-        } catch (error) {
-            console.error("Error in handleYProfile:", error);
-        }
-    }
 
     function updateProfilePlots(profiles) {
         console.log('Updating profile plots.');
@@ -299,9 +260,7 @@ export function initializeFileUploadHandler() {
         elements.fileInput.addEventListener('change', handleFileUpload);
         elements.viewAllBtn.addEventListener('click', loadImage);
         elements.previewTab.addEventListener('click', loadImage);
-        elements.xProfileTab.addEventListener('click', handleXProfile);
-        elements.yProfileTab.addEventListener('click', handleYProfile);
-
+        
         if (elements.savePreviewBtn) {
             elements.savePreviewBtn.addEventListener('click', () => saveImage(elements.previewImage, 'preview.png'));
         }
