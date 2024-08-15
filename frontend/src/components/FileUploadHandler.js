@@ -26,18 +26,6 @@ export function initializeFileUploadHandler() {
     let isQEnergyLossEnabled = false;
     let qConversionPerformed = false;
 
-    let lastValidExplist = [];
-    let lastValidExptitles = [];
-
-    function saveLastValidData(dataToSend) {
-        if (dataToSend.explist && dataToSend.explist.length > 0) {
-            lastValidExplist = dataToSend.explist;
-        }
-        if (dataToSend.exptitles && dataToSend.exptitles.length > 0) {
-            lastValidExptitles = dataToSend.exptitles;
-        }
-    }
-
     if (Object.values(elements).some(element => !element)) {
         console.error('One or more required elements not found');
         return;
@@ -59,94 +47,92 @@ export function initializeFileUploadHandler() {
         console.log(`q - Energy Loss enabled: ${isQEnergyLossEnabled}`);
 
         if (isQEnergyLossEnabled !== wasQEnergyLossEnabled) {
-            qConversionPerformed = false;  // 체크박스 상태가 바뀌었으므로 qConversion을 다시 수행해야 함
+            qConversionPerformed = false;
         }
 
         if (isQEnergyLossEnabled && !qConversionPerformed) {
-            await requestQPlot(); // q_conversion 수행 후 플롯 갱신
+            await saveSessionData(); // 세션 데이터 저장
+            await requestQPlot(); 
             qConversionPerformed = true;
         } else {
-            togglePlotVisibility(); // Q-Energy Loss 토글을 켰을 때, 변환된 데이터 표시
+            togglePlotVisibility();
         }
     }
 
-    async function sendTransformRequest(action) {
-        console.log(`sendTransformRequest called with action: ${action}`);
-
-        const dataToSend = {
-            action: action,
-            explist: lastUploadedData.explist_shifted_gauss || [],
-            exptitles: lastUploadedData.exptitles || [],
-            gauss_peak_y_mean: lastUploadedData.gauss_peak_y_mean || [],
-            q_energy_loss_enabled: qConversionPerformed && isQEnergyLossEnabled // q_conversion이 수행된 경우만 true
-        };
-
-        if (dataToSend.explist.length === 0) {
-            console.error('explist is empty. Aborting request.');
-            return;
-        }
-
-        console.log("Data to send:", dataToSend);
-
+    async function saveSessionData() {
         try {
-            console.log("Sending transform request to server...");
-            const response = await fetch('http://localhost:7654/transform', {
+            const response = await fetch('http://localhost:7654/upload-directory', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(dataToSend)
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    explist_shifted_gauss: lastUploadedData.explist_shifted_gauss,
+                    exptitles: lastUploadedData.exptitles,
+                    gauss_peak_y_mean: lastUploadedData.gauss_peak_y_mean
+                })
             });
 
             if (!response.ok) {
                 throw new Error(`Server error ${response.status}: ${response.statusText}`);
             }
 
-            const result = await response.json();
-            if (result.success) {
-                console.log("Transformation successful. Result:", result);
-                updatePreviewImage(result.image);
-                saveLastValidData(result);
-            } else {
-                console.error("Transformation failed:", result.error);
-            }
+            const data = await response.json();
+            console.log('Session data saved successfully.');
+
         } catch (error) {
-            console.error("Error in sendTransformRequest:", error);
+            console.error('Failed to save session data:', error);
         }
     }
 
-    initializeEventListeners();
-
-    function initializeEventListeners() {
-        console.log('Initializing event listeners.');
-        elements.fileInput.addEventListener('change', handleFileUpload);
-        elements.viewAllBtn.addEventListener('click', loadImage);
-        elements.previewTab.addEventListener('click', loadImage);
-        elements.xProfileTab.addEventListener('click', () => loadProfile('x'));
-        elements.yProfileTab.addEventListener('click', () => loadProfile('y'));
-
-        if (elements.savePreviewBtn) {
-            elements.savePreviewBtn.addEventListener('click', () => saveImage(elements.previewImage, 'preview.png'));
-        }
-        if (elements.saveXProfileBtn) {
-            elements.saveXProfileBtn.addEventListener('click', () => saveImage(elements.xProfilePlot, 'x_profile.png'));
-        }
-        if (elements.saveYProfileBtn) {
-            elements.saveYProfileBtn.addEventListener('click', () => saveImage(elements.yProfilePlot, 'y_profile.png'));
-        }
-        if (elements.exportCSVBtn) {
-            elements.exportCSVBtn.addEventListener('click', exportCSVFiles);
+    async function requestQPlot() {
+        if (!lastUploadedData || !lastUploadedData.explist_shifted_gauss) {
+            console.error('No explist_shifted_gauss data available for Q-Plot request.');
+            updateUploadMessage('No data available to generate Q-Plot.');
+            return;
         }
 
-        if (elements.qEnergyLossCheckbox) {
-            elements.qEnergyLossCheckbox.addEventListener('change', handleQEnergyLossChange);
-        }
+        try {
+            const payload = {
+                action: 'q_conversion',
+                explist: lastUploadedData.explist_shifted_gauss,
+                exptitles: lastUploadedData.exptitles,
+                gauss_peak_y_mean: lastUploadedData.gauss_peak_y_mean,
+                q_energy_loss_enabled: true,
+            };
 
-        elements.flipUdBtn.addEventListener('click', () => sendTransformRequest('flip_ud'));
-        elements.flipLrBtn.addEventListener('click', () => sendTransformRequest('flip_lr'));
-        elements.rotateCcw90Btn.addEventListener('click', () => sendTransformRequest('rotate_ccw90'));
-        elements.rotateCw90Btn.addEventListener('click', () => sendTransformRequest('rotate_cw90'));
-        elements.resetBtn.addEventListener('click', () => sendTransformRequest('reset'));
+            const response = await fetch('http://localhost:7654/q-energyloss', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server error ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log('Q-Plot received and updating image.');
+
+            if (data.image) {
+                updatePreviewImage(data.image);
+                lastUploadedData.explist = data.explist_q_converted || lastUploadedData.explist; 
+            }
+
+        } catch (error) {
+            console.error('Failed to retrieve Q-Plot:', error);
+        }
+    }
+
+    function togglePlotVisibility() {
+        console.log('Toggling plot visibility');
+        if (isQEnergyLossEnabled && lastUploadedData.q_plot) {
+            console.log('Displaying Q-Plot');
+            updatePreviewImage(lastUploadedData.q_plot);
+        } else if (lastUploadedData.image) {
+            console.log('Displaying preview image');
+            updatePreviewImage(lastUploadedData.image);
+        } else {
+            console.warn('No image data available to display');
+        }
     }
 
     async function handleFileUpload(event) {
@@ -207,26 +193,11 @@ export function initializeFileUploadHandler() {
         }
     }
 
-    async function requestQPlot() {
-        if (!lastUploadedData || !lastUploadedData.explist_shifted_gauss) {
-            console.error('No explist_shifted_gauss data available for Q-Plot request.');
-            updateUploadMessage('No data available to generate Q-Plot.');
-            return;
-        }
-
+    async function handleXProfile() {
         try {
-            const payload = {
-                action: 'q_conversion',
-                explist: lastUploadedData.explist_shifted_gauss,
-                exptitles: lastUploadedData.exptitles,
-                gauss_peak_y_mean: lastUploadedData.gauss_peak_y_mean,
-                q_energy_loss_enabled: true,
-            };
-
-            const response = await fetch('http://localhost:7654/transform', {
+            const response = await fetch('http://localhost:7654/x-profile', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
+                headers: { 'Content-Type': 'application/json' }
             });
 
             if (!response.ok) {
@@ -234,15 +205,68 @@ export function initializeFileUploadHandler() {
             }
 
             const data = await response.json();
-            console.log('Q-Plot received and updating image.');
+            if (data.success) {
+                updateProfilePlot(data.image, elements.xProfilePlot, 'saveXProfileBtn');
+            } else {
+                console.error("Failed to generate X-Profile:", data.error);
+            }
+        } catch (error) {
+            console.error("Error in handleXProfile:", error);
+        }
+    }
 
-            if (data.image) {
-                updatePreviewImage(data.image);
-                lastUploadedData.explist = data.explist_q_converted || lastUploadedData.explist; // 업데이트된 리스트 저장
+    async function handleYProfile() {
+        try {
+            const response = await fetch('http://localhost:7654/y-profile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server error ${response.status}: ${response.statusText}`);
             }
 
+            const data = await response.json();
+            if (data.success) {
+                updateProfilePlot(data.image, elements.yProfilePlot, 'saveYProfileBtn');
+            } else {
+                console.error("Failed to generate Y-Profile:", data.error);
+            }
         } catch (error) {
-            console.error('Failed to retrieve Q-Plot:', error);
+            console.error("Error in handleYProfile:", error);
+        }
+    }
+
+    function updateProfilePlots(profiles) {
+        console.log('Updating profile plots.');
+        if (!profiles) {
+            console.error('Profiles data is undefined or null.');
+            return;
+        }
+
+        if (!profiles.x_profile || !profiles.y_profile) {
+            console.error('x_profile or y_profile data is missing.');
+            return;
+        }
+
+        updateProfilePlot(profiles.x_profile, elements.xProfilePlot, 'saveXProfileBtn');
+        updateProfilePlot(profiles.y_profile, elements.yProfilePlot, 'saveYProfileBtn');
+    }
+
+    function updateProfilePlot(profileData, plotElement, saveBtnId) {
+        if (profileData && profileData.image) {
+            console.log(`Updating profile plot: ${saveBtnId}`);
+
+            let imageUrl = profileData.image;
+            if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+                imageUrl = `http://localhost:7654${imageUrl}`;
+            }
+
+            plotElement.src = imageUrl;
+            plotElement.style.display = "block";
+            document.getElementById(saveBtnId).style.display = 'inline-block';
+        } else {
+            console.warn(`No profile data available for: ${saveBtnId}`);
         }
     }
 
@@ -270,16 +294,79 @@ export function initializeFileUploadHandler() {
         console.log(`Updating preview image with URL: ${cacheBustedUrl}`);
     }
 
-    function togglePlotVisibility() {
-        console.log('Toggling plot visibility');
-        if (isQEnergyLossEnabled && lastUploadedData.q_plot) {
-            console.log('Displaying Q-Plot');
-            updatePreviewImage(lastUploadedData.q_plot);
-        } else if (lastUploadedData.image) {
-            console.log('Displaying preview image');
-            updatePreviewImage(lastUploadedData.image);
-        } else {
-            console.warn('No image data available to display');
+    function initializeEventListeners() {
+        console.log('Initializing event listeners.');
+        elements.fileInput.addEventListener('change', handleFileUpload);
+        elements.viewAllBtn.addEventListener('click', loadImage);
+        elements.previewTab.addEventListener('click', loadImage);
+        elements.xProfileTab.addEventListener('click', handleXProfile);
+        elements.yProfileTab.addEventListener('click', handleYProfile);
+
+        if (elements.savePreviewBtn) {
+            elements.savePreviewBtn.addEventListener('click', () => saveImage(elements.previewImage, 'preview.png'));
+        }
+        if (elements.saveXProfileBtn) {
+            elements.saveXProfileBtn.addEventListener('click', () => saveImage(elements.xProfilePlot, 'x_profile.png'));
+        }
+        if (elements.saveYProfileBtn) {
+            elements.saveYProfileBtn.addEventListener('click', () => saveImage(elements.yProfilePlot, 'y_profile.png'));
+        }
+        if (elements.exportCSVBtn) {
+            elements.exportCSVBtn.addEventListener('click', exportCSVFiles);
+        }
+
+        if (elements.qEnergyLossCheckbox) {
+            elements.qEnergyLossCheckbox.addEventListener('change', handleQEnergyLossChange);
+        }
+
+        elements.flipUdBtn.addEventListener('click', () => sendTransformRequest('flip_ud'));
+        elements.flipLrBtn.addEventListener('click', () => sendTransformRequest('flip_lr'));
+        elements.rotateCcw90Btn.addEventListener('click', () => sendTransformRequest('rotate_ccw90'));
+        elements.rotateCw90Btn.addEventListener('click', () => sendTransformRequest('rotate_cw90'));
+        elements.resetBtn.addEventListener('click', () => sendTransformRequest('reset'));
+    }
+
+    async function sendTransformRequest(action) {
+        console.log(`sendTransformRequest called with action: ${action}`);
+
+        const dataToSend = {
+            action: action,
+            explist: lastUploadedData.explist_shifted_gauss || [],
+            exptitles: lastUploadedData.exptitles || [],
+            gauss_peak_y_mean: lastUploadedData.gauss_peak_y_mean || [],
+            q_energy_loss_enabled: qConversionPerformed && isQEnergyLossEnabled
+        };
+
+        if (dataToSend.explist.length === 0) {
+            console.error('explist is empty. Aborting request.');
+            return;
+        }
+
+        console.log("Data to send:", dataToSend);
+
+        try {
+            console.log("Sending transform request to server...");
+            const response = await fetch('http://localhost:7654/transform', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(dataToSend)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server error ${response.status}: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            if (result.success) {
+                console.log("Transformation successful. Result:", result);
+                updatePreviewImage(result.image);
+            } else {
+                console.error("Transformation failed:", result.error);
+            }
+        } catch (error) {
+            console.error("Error in sendTransformRequest:", error);
         }
     }
 
@@ -296,54 +383,6 @@ export function initializeFileUploadHandler() {
         }
     }
 
-    function loadProfile(axis) {
-        console.log(`Loading ${axis}-profile`);
-        const isXProfile = axis === 'x';
-        const profilePlot = isXProfile ? elements.xProfilePlot : elements.yProfilePlot;
-    
-        if (lastUploadedData && lastUploadedData.profiles) {
-            const profileData = isXProfile ? lastUploadedData.profiles.x_profile : lastUploadedData.profiles.y_profile;
-            if (profileData && profileData.image) {
-                let imageUrl = profileData.image;
-                if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
-                    imageUrl = `http://localhost:7654${imageUrl}`;
-                }
-    
-                profilePlot.src = imageUrl;
-                profilePlot.style.display = "block";
-            } else {
-                console.error(`No ${axis.toUpperCase()}-profile image data available`);
-            }
-        } else {
-            console.log(`No uploaded data available for ${axis.toUpperCase()}-profile, triggering file input`);
-            elements.fileInput.dispatchEvent(new Event('change'));
-        }
-    }
-    
-
-    function updateProfilePlots(profiles) {
-        console.log('Updating profile plots.');
-        updateProfilePlot(profiles.x_profile, elements.xProfilePlot, 'saveXProfileBtn');
-        updateProfilePlot(profiles.y_profile, elements.yProfilePlot, 'saveYProfileBtn');
-    }
-
-    function updateProfilePlot(profileData, plotElement, saveBtnId) {
-        if (profileData && profileData.image) {
-            console.log(`Updating profile plot: ${saveBtnId}`);
-
-            let imageUrl = profileData.image;
-            if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
-                imageUrl = `http://localhost:7654${imageUrl}`;
-            }
-
-            plotElement.src = imageUrl;
-            plotElement.style.display = "block";
-            document.getElementById(saveBtnId).style.display = 'inline-block';
-        } else {
-            console.warn(`No profile data available for: ${saveBtnId}`);
-        }
-    }
-
     function handleReset() {
         if (!initialUploadedData) {
             console.warn('No data available to reset.');
@@ -352,7 +391,7 @@ export function initializeFileUploadHandler() {
         }
 
         lastUploadedData = JSON.parse(JSON.stringify(initialUploadedData));
-        qConversionPerformed = false; // Initialize qConversionPerformed
+        qConversionPerformed = false; 
         updateProfilePlots(lastUploadedData.profiles);
         togglePlotVisibility();
         updateUploadMessage('Reset to initial state.');
@@ -430,6 +469,8 @@ export function initializeFileUploadHandler() {
         link.click();
         document.body.removeChild(link);
     }
+
+    initializeEventListeners();
 
     return {
         updateUploadMessage,

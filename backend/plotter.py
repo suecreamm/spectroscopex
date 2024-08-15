@@ -154,6 +154,7 @@ def plot_x_profiles(explist, exptitles, method='mean', col_nums=4, plot=False):
 
     return gauss_peak_x, lorentz_peak_x
 
+
 def plot_y_profiles(explist, exptitles, method='mean', col_nums=4, plot=False):
     num_dfs = len(explist)
     row_nums = math.ceil(num_dfs / col_nums)
@@ -203,6 +204,7 @@ def plot_y_profiles(explist, exptitles, method='mean', col_nums=4, plot=False):
 
     return gauss_peak_y, lorentz_peak_y
 
+
 def origin_dataframes(explist, peak_x, peak_y, exptitles, save=False, filename=None):
     import os
 
@@ -222,17 +224,21 @@ def origin_dataframes(explist, peak_x, peak_y, exptitles, save=False, filename=N
             float_columns = df.columns.astype(float)
             new_columns = float_columns - peak_x[i]
         except ValueError:
-            print(f"Error converting columns to float for DataFrame {i}, generating evenly spaced columns.")
-            first_col = float(df.columns[0])
-            last_col = float(df.columns[-1])
-            total_cols = df.shape[1]
-            new_columns = np.linspace(first_col - peak_x[i], last_col - peak_x[i], total_cols)
+            logging.error(f"Error converting columns to float for DataFrame {i}, generating evenly spaced columns.")
+            try:
+                first_col = float(df.columns[0])
+                last_col = float(df.columns[-1])
+                total_cols = df.shape[1]
+                new_columns = np.linspace(first_col - peak_x[i], last_col - peak_x[i], total_cols)
+            except ValueError:
+                logging.error(f"Could not convert columns to float, defaulting to integer range.")
+                new_columns = np.arange(df.shape[1]) - peak_x[i]
 
         try:
             float_index = df.index.astype(float)
             new_index = float_index - peak_y[i]
         except ValueError:
-            print(f"Error converting index to float for DataFrame {i}, keeping original index.")
+            logging.error(f"Error converting index to float for DataFrame {i}, keeping original index.")
             new_index = df.index
 
         shift_df.columns = new_columns
@@ -250,6 +256,7 @@ def origin_dataframes(explist, peak_x, peak_y, exptitles, save=False, filename=N
 
     return shifted_explist
 
+
 def shift_and_preview(explist, exptitles, plot=True):
     gauss_peak_x_mean, _ = plot_x_profiles(explist, exptitles, method='mean', col_nums=4)
     gauss_peak_y_mean, _ = plot_y_profiles(explist, exptitles, method='mean', col_nums=4)
@@ -261,6 +268,8 @@ def shift_and_preview(explist, exptitles, plot=True):
         img_bytes = create_plot(explist_shifted_gauss, exptitles)
 
     return gauss_peak_x_mean, gauss_peak_y_mean, explist_shifted_gauss, img_bytes
+
+
 
 def angle_to_q(angle, E0, E_loss):
     if E_loss < 0 or angle < 0:

@@ -64,3 +64,24 @@ def load_and_store_data(file_paths, add_str='', add_str2=' K', multiply_small_me
             exptitles.append(variable_name)
     
     return explist, exptitles
+
+def save_dataframe_to_file(df, filename, directory='dataframes'):
+    """
+    :param df: 저장할 데이터프레임
+    :param filename: 저장할 파일 이름
+    :param directory: 파일이 저장될 디렉토리, 기본값은 'dataframes'
+    :return: 파일의 전체 경로
+    """
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    
+    filepath = os.path.join(directory, filename)
+    df.to_csv(filepath)
+    return filepath
+
+def load_dataframe_from_file(filepath):
+    """
+    :param filepath: 로드할 파일의 경로
+    :return: 로드된 데이터프레임
+    """
+    return pd.read_csv(filepath, index_col=0)
