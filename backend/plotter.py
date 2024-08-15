@@ -65,7 +65,7 @@ def create_plot(explist, exptitles, save2D=True, num_xticks=5, num_yticks=5, num
         ax.set_title(title, fontsize=20)
 
         if i % num_cols == 0:
-            ax.set_ylabel('Energy (eV)', fontsize=14)
+            ax.set_ylabel('Energy Loss (eV)', fontsize=14)
         else:
             ax.set_yticklabels([])
 
@@ -78,12 +78,16 @@ def create_plot(explist, exptitles, save2D=True, num_xticks=5, num_yticks=5, num
         cbar_ax = fig.add_axes([0.92, 0.063, 0.02, 0.15])
         fig.colorbar(im, cax=cbar_ax, orientation='vertical')
 
-    plt.tight_layout(rect=[0, 0, 0.9, 1])
+    try:
+        plt.tight_layout(rect=[0, 0, 0.9, 1])
+    except Exception as e:
+        logging.error(f"Error in tight_layout: {str(e)}")
 
     img_bytes = BytesIO()
-    
+
     try:
         plt.savefig(img_bytes, format='png', bbox_inches='tight')
+        img_bytes.seek(0)
         logging.debug("Image saved successfully.")
     except Exception as e:
         logging.error(f"Error saving image: {str(e)}")
@@ -91,9 +95,8 @@ def create_plot(explist, exptitles, save2D=True, num_xticks=5, num_yticks=5, num
     finally:
         plt.close()
 
-    img_bytes.seek(0)
-
     return img_bytes
+
 
 
 def plot_x_profiles(explist, exptitles, method='mean', col_nums=4, plot=False):
@@ -335,9 +338,9 @@ def plot_data_with_q_conversion(explist, exptitles, gauss_y, num_cols=2,
                                 cbar_pos=[0.92, 0.063, 0.02, 0.15], cmap='inferno',
                                 font_family='sans-serif', font_style='normal', font_weight='normal',
                                 num_ticks_x=5, num_ticks_y=5, tick_fontsize=12,
-                                apply_log=True):  # apply_log 플래그 추가
-    
+                                apply_log=True, original_explist=None):
     print(f"Received E0 values: {gauss_y}")
+    print(f"Q-Energy Loss Enabled: {q_min is not None or q_max is not None}")
 
     # Set font properties
     font_prop = fm.FontProperties(family=font_family, style=font_style, weight=font_weight)
@@ -355,29 +358,38 @@ def plot_data_with_q_conversion(explist, exptitles, gauss_y, num_cols=2,
     plt.subplots_adjust(hspace=0.05, wspace=0.05)
 
     for i, (df, title) in enumerate(zip(explist, exptitles)):
+        print(f"Processing subplot {i+1}/{num_subplots} for '{title}'")
+
         Z = df.values
-        
+        if Z.size == 0:
+            print(f"Warning: Data for {title} is empty.")
+            continue
+
         if apply_log and np.issubdtype(Z.dtype, np.number):
-            Z = np.log1p(Z)  # Optional log transformation
+            Z = np.log1p(Z)
+            if np.isnan(Z).any():
+                print(f"Warning: NaN values found in log-transformed data for {title}.")
 
         angles = df.columns.astype(float) * np.pi / 180  # Convert angles to radians
         energy_losses = df.index.astype(float)  # Energy Loss in eV
 
-        E0 = gauss_y[i]  # 리스트에서 값을 가져옵니다.
+        E0 = gauss_y[i]
         if E0 is None or E0 <= 0:
             raise ValueError(f"Invalid E0 value: {E0} for experiment {title}")
 
         q_values = np.array([angle_to_q(angle, E0, 0) for angle in angles])
-
         processed_q_values = process_q_values(q_values)
 
-        # Set extent with validation
+        # Use original Y-axis values from original_explist when q_energy_loss_enabled
+        if original_explist is not None:
+            print(f"Using original Y-axis values for {title}")
+            energy_losses = original_explist[i].index.astype(float)
+
         q_min_plot = q_min if q_min is not None else np.nanmin(processed_q_values)
         q_max_plot = q_max if q_max is not None else np.nanmax(processed_q_values)
         E_min_plot = E_min if E_min is not None else np.nanmin(energy_losses)
         E_max_plot = E_max if E_max is not None else np.nanmax(energy_losses)
 
-        # Check for NaN or Inf and replace with default values
         if np.isnan(q_min_plot) or np.isinf(q_min_plot):
             q_min_plot = 0
         if np.isnan(q_max_plot) or np.isinf(q_max_plot):
@@ -388,6 +400,7 @@ def plot_data_with_q_conversion(explist, exptitles, gauss_y, num_cols=2,
             E_max_plot = 1
 
         extent = [q_min_plot, q_max_plot, E_min_plot, E_max_plot]
+        print(f"Plotting with extent: {extent}")
 
         ax = axs[i]
         im = ax.imshow(Z, aspect='auto', origin='lower', extent=extent, cmap=cmap)
@@ -396,28 +409,35 @@ def plot_data_with_q_conversion(explist, exptitles, gauss_y, num_cols=2,
         ax.set_xlabel('q (Å⁻¹)', fontsize=label_fontsize, fontproperties=font_prop)
         ax.set_ylabel('Energy Loss (eV)', fontsize=label_fontsize, fontproperties=font_prop)
 
-        # Set font properties for axis labels
         for label in ax.get_xticklabels() + ax.get_yticklabels():
             label.set_fontproperties(font_prop)
 
         ax.tick_params(axis='both', which='major', labelsize=tick_fontsize)
 
-    # Remove unused subplots
     for j in range(num_subplots, len(axs)):
         fig.delaxes(axs[j])
 
-    # Colorbar
     cbar_ax = fig.add_axes(cbar_pos)
     cbar = fig.colorbar(im, cax=cbar_ax, orientation='vertical')
     cbar.ax.tick_params(labelsize=label_fontsize)
     for label in cbar.ax.get_yticklabels():
         label.set_fontproperties(font_prop)
 
-    plt.tight_layout(rect=[0, 0, 0.9, 1])
-    
+    try:
+        plt.tight_layout(rect=[0, 0, 0.9, 1])
+    except Exception as e:
+        print(f"Warning: Error in tight_layout: {str(e)}")
+
     img_bytes = BytesIO()
-    plt.savefig(img_bytes, format='png')
-    plt.close()
+    try:
+        plt.savefig(img_bytes, format='png', bbox_inches='tight')
+        img_bytes.seek(0)
+        print(f"Info: Image saved successfully, size: {img_bytes.getbuffer().nbytes} bytes.")
+    except Exception as e:
+        print(f"Error: Failed to save image: {str(e)}")
+        raise
+
+    plt.close(fig)
     img_bytes.seek(0)
 
     return img_bytes, explist

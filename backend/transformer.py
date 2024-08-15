@@ -44,16 +44,17 @@ def transform_data(explist, action, exptitles=None, gauss_y=None, q_energy_loss_
     if explist is None or exptitles is None:
         raise ValueError("explist and exptitles must not be None in transform_data")
 
-    transformed_explist = []
+    transformed_explist = explist
+    img_bytes = None
 
-    if q_energy_loss_enabled or use_q_converted:
-        if exptitles is None or gauss_y is None:
-            raise ValueError("exptitles and gauss_y must be provided for q_conversion")
+    if q_energy_loss_enabled and use_q_converted:
+        logging.debug("Performing q_conversion")
+        # q_conversion을 한 번만 수행
         transformed_explist, img_bytes = plot_data_with_q_conversion(explist, exptitles, gauss_y)
     else:
+        logging.debug("Skipping q_conversion and directly creating plot")
+        # 변환된 데이터 사용
         transformed_explist = explist
-
-    logging.debug(f"Transformed explist after Q-Conversion or initial assignment: {transformed_explist}")
 
     # q-converted 데이터에 대해 추가 액션 수행
     if action in ['flip_ud', 'flip_lr', 'rotate_ccw90', 'rotate_cw90']:
@@ -76,10 +77,18 @@ def transform_data(explist, action, exptitles=None, gauss_y=None, q_energy_loss_
 
     logging.debug(f"Final transformed explist: {transformed_explist}")
 
-    img_bytes = get_transformed_plot(transformed_explist, exptitles)
+    if not img_bytes:
+        # q_conversion을 한 번 수행했거나 q_energy_loss_enabled가 False인 경우, create_plot으로 그림
+        logging.debug("Generating plot with create_plot")
+        img_bytes = create_plot(transformed_explist, exptitles, apply_log=True)
+
+    # 디버깅 메시지 추가
+    if img_bytes:
+        logging.debug(f"Generated image bytes: {len(img_bytes.getvalue())} bytes")
+    else:
+        logging.error("Failed to generate image bytes, img_bytes is None or empty")
+
     return transformed_explist, img_bytes
-
-
 
 
 def get_transformed_plot(explist, exptitles, apply_log=True):
