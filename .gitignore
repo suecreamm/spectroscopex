@@ -5,6 +5,8 @@ __pycache__/
 *.csv
 *.png
 uploads/*.csv
+*.json
+*.pkl
 
 # Distribution / packaging
 bin/

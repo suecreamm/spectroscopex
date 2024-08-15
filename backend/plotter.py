@@ -9,20 +9,17 @@ import logging
 
 plt.switch_backend('Agg')
 
-# Gaussian and Lorentzian functions
 def gaussian(x, a, x0, sigma):
     return a * np.exp(-(x - x0) ** 2 / (2 * sigma ** 2))
 
 def lorentzian(x, a, x0, gamma):
     return a * gamma ** 2 / ((x - x0) ** 2 + gamma ** 2)
 
-# Convert to float with error handling
 def convert_to_float(value):
     try:
         return float(value)
     except ValueError:
         return value
-
 
 def create_plot(explist, exptitles, save2D=True, num_xticks=5, num_yticks=5, num_cols=2, apply_log=True):
     num_subplots = len(explist)
@@ -44,7 +41,6 @@ def create_plot(explist, exptitles, save2D=True, num_xticks=5, num_yticks=5, num
     plt.subplots_adjust(hspace=0, wspace=0)
     im = None
 
-    # 디버깅: 데이터가 유효한지 확인
     for i, (df, title) in enumerate(zip(explist, exptitles)):
         logging.debug(f"Creating plot for {title} with data shape: {df.shape}")
 
@@ -97,8 +93,6 @@ def create_plot(explist, exptitles, save2D=True, num_xticks=5, num_yticks=5, num
 
     return img_bytes
 
-
-
 def plot_x_profiles(explist, exptitles, method='mean', col_nums=4, plot=False):
     num_dfs = len(explist)
     row_nums = math.ceil(num_dfs / col_nums)
@@ -137,7 +131,6 @@ def plot_x_profiles(explist, exptitles, method='mean', col_nums=4, plot=False):
             ax.set_ylabel('Values')
             ax.legend()
 
-            # x축 레이블 간격 설정 (5개의 레이블만 표시)
             max_xticks = 5
             x_ticks = np.linspace(0, len(profile.index) - 1, max_xticks, dtype=int)
             formatted_xticks = [profile.index[j] for j in x_ticks]
@@ -153,7 +146,6 @@ def plot_x_profiles(explist, exptitles, method='mean', col_nums=4, plot=False):
         plt.show()
 
     return gauss_peak_x, lorentz_peak_x
-
 
 def plot_y_profiles(explist, exptitles, method='mean', col_nums=4, plot=False):
     num_dfs = len(explist)
@@ -203,7 +195,6 @@ def plot_y_profiles(explist, exptitles, method='mean', col_nums=4, plot=False):
         plt.show()
 
     return gauss_peak_y, lorentz_peak_y
-
 
 def origin_dataframes(explist, peak_x, peak_y, exptitles, save=False, filename=None):
     import os
@@ -256,8 +247,14 @@ def origin_dataframes(explist, peak_x, peak_y, exptitles, save=False, filename=N
 
     return shifted_explist
 
-
 def shift_and_preview(explist, exptitles, plot=True):
+    if not explist or not exptitles:
+        logging.error("Explist or exptitles is empty.")
+        return None, None, [], None
+
+    logging.debug(f"Received explist: {explist}")
+    logging.debug(f"Received exptitles: {exptitles}")
+    
     gauss_peak_x_mean, _ = plot_x_profiles(explist, exptitles, method='mean', col_nums=4)
     gauss_peak_y_mean, _ = plot_y_profiles(explist, exptitles, method='mean', col_nums=4)
 
@@ -268,8 +265,6 @@ def shift_and_preview(explist, exptitles, plot=True):
         img_bytes = create_plot(explist_shifted_gauss, exptitles)
 
     return gauss_peak_x_mean, gauss_peak_y_mean, explist_shifted_gauss, img_bytes
-
-
 
 def angle_to_q(angle, E0, E_loss):
     if E_loss < 0 or angle < 0:
@@ -285,16 +280,6 @@ def angle_to_q(angle, E0, E_loss):
     q = np.sqrt(k0**2 + k1**2 - 2*k0*k1*np.cos(angle))
 
     return q  # Å^-1로 변환
-
-def find_zero_indices(q_values, new_q_values, debugging=False):
-    original_zeros = np.where(q_values == 0)[0]
-    new_zeros = np.where(new_q_values == 0)[0]
-
-    if debugging:
-        print(f"Original q_values zero indices: {original_zeros}")
-        print(f"New q_values zero indices: {new_zeros}")
-
-    return original_zeros, new_zeros
 
 def process_q_values(q_values, debugging=True):
     valid_q = q_values[~np.isnan(q_values) & ~np.isinf(q_values)]
@@ -332,14 +317,11 @@ def process_q_values(q_values, debugging=True):
             print(f"Generated new_q_values (first 10): {new_q_values[:10]}")
             print(f"Generated new_q_values (last 10): {new_q_values[-10:]}")
 
-        find_zero_indices(q_values, new_q_values, debugging=debugging)
-
         return new_q_values
     else:
         if debugging:
             print("q_step is not positive, returning original q_values")
         return q_values
-
 
 def plot_data_with_q_conversion(explist, exptitles, gauss_y, num_cols=2,
                                 q_min=None, q_max=None, E_min=None, E_max=None,
@@ -389,7 +371,6 @@ def plot_data_with_q_conversion(explist, exptitles, gauss_y, num_cols=2,
         q_values = np.array([angle_to_q(angle, E0, 0) for angle in angles])
         processed_q_values = process_q_values(q_values)
 
-        # Use original Y-axis values from original_explist when q_energy_loss_enabled
         if original_explist is not None:
             print(f"Using original Y-axis values for {title}")
             energy_losses = original_explist[i].index.astype(float)
