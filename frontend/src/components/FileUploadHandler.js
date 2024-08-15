@@ -24,7 +24,7 @@ export function initializeFileUploadHandler() {
     let lastUploadedData = null;
     let initialUploadedData = null;
     let isQEnergyLossEnabled = false;
-    let qConversionPerformed = false; // q_conversion이 이미 수행되었는지 여부를 추적
+    let qConversionPerformed = false;
 
     let lastValidExplist = [];
     let lastValidExptitles = [];
@@ -106,7 +106,7 @@ export function initializeFileUploadHandler() {
             if (result.success) {
                 console.log("Transformation successful. Result:", result);
                 updatePreviewImage(result.image);
-                saveLastValidData(result); // 변환 후 마지막 데이터 저장
+                saveLastValidData(result);
             } else {
                 console.error("Transformation failed:", result.error);
             }
@@ -195,10 +195,9 @@ export function initializeFileUploadHandler() {
 
             updatePreviewImage(data.image);
 
-            // 파일 업로드 후 자동으로 Q-Energy Loss 플롯 요청
             if (isQEnergyLossEnabled) {
                 await requestQPlot();
-                qConversionPerformed = true; // q_conversion이 완료되었음을 기록
+                qConversionPerformed = true;
             }
 
             updateUploadMessage('Files uploaded and processed successfully.');
@@ -301,11 +300,16 @@ export function initializeFileUploadHandler() {
         console.log(`Loading ${axis}-profile`);
         const isXProfile = axis === 'x';
         const profilePlot = isXProfile ? elements.xProfilePlot : elements.yProfilePlot;
-
+    
         if (lastUploadedData && lastUploadedData.profiles) {
             const profileData = isXProfile ? lastUploadedData.profiles.x_profile : lastUploadedData.profiles.y_profile;
             if (profileData && profileData.image) {
-                profilePlot.src = profileData.image;
+                let imageUrl = profileData.image;
+                if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+                    imageUrl = `http://localhost:7654${imageUrl}`;
+                }
+    
+                profilePlot.src = imageUrl;
                 profilePlot.style.display = "block";
             } else {
                 console.error(`No ${axis.toUpperCase()}-profile image data available`);
@@ -315,6 +319,7 @@ export function initializeFileUploadHandler() {
             elements.fileInput.dispatchEvent(new Event('change'));
         }
     }
+    
 
     function updateProfilePlots(profiles) {
         console.log('Updating profile plots.');
@@ -347,7 +352,7 @@ export function initializeFileUploadHandler() {
         }
 
         lastUploadedData = JSON.parse(JSON.stringify(initialUploadedData));
-        qConversionPerformed = false; // 초기화 시 qConversion 상태도 초기화
+        qConversionPerformed = false; // Initialize qConversionPerformed
         updateProfilePlots(lastUploadedData.profiles);
         togglePlotVisibility();
         updateUploadMessage('Reset to initial state.');
