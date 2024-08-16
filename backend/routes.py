@@ -2,6 +2,7 @@
 import os
 import logging
 import traceback
+import logging
 from flask import Blueprint, request, jsonify, session
 from werkzeug.utils import secure_filename
 from file_processor import get_sorted_files, load_and_store_data
@@ -9,19 +10,12 @@ from plotter import shift_and_preview, plot_data_with_q_conversion
 from profile_analyzer import generate_profile_data
 from transformer import transform_data
 import uuid
+import pickle
 from utils import save_image, save_dataframe_to_file, load_dataframe_from_file
 
 main_bp = Blueprint('main', __name__)
 
 def save_file_to_directory(file, directory, filename):
-    """
-    파일을 지정된 디렉토리에 저장합니다.
-    
-    :param file: 저장할 파일 객체
-    :param directory: 파일을 저장할 디렉토리 경로
-    :param filename: 저장할 파일의 이름
-    :return: 파일의 전체 경로
-    """
     save_dir = os.path.abspath(directory)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -33,20 +27,29 @@ def save_file_to_directory(file, directory, filename):
     return save_path
 
 
+def save_uploaded_file(file, save_dir='uploads'):
+    """Uploads the file to the server and returns the file path."""
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+    file_path = os.path.join(save_dir, secure_filename(file.filename))
+    file.save(file_path)
+    return file_path
+
+
 @main_bp.route('/upload-directory', methods=['POST'])
 def upload_directory():
-    if 'filePaths' not in request.files:
-        return jsonify({'error': 'No file part in request.files'}), 400
-    
-    files = request.files.getlist('filePaths')
-    if len(files) == 0:
-        return jsonify({'error': 'No files selected'}), 400
-
+    SAVED_DATA_DIR = 'saved_data'
     try:
+        if 'filePaths' not in request.files:
+            logging.error("파일이 요청에 포함되지 않음")
+            return jsonify({"error": "파일이 요청에 포함되지 않음"}), 400
+        
+        # 파일을 읽고 처리
+        files = request.files.getlist('filePaths')
         file_paths = []
         for file in files:
             filename = secure_filename(file.filename)
-            save_path = save_file_to_directory(file, os.getcwd(), filename)
+            save_path = save_file_to_directory(file, SAVED_DATA_DIR, filename)
             file_paths.append(save_path)
 
         sorted_file_paths = get_sorted_files(file_paths)
@@ -62,6 +65,7 @@ def upload_directory():
         session['exptitles'] = exptitles
         session['gauss_peak_y_mean'] = gauss_peak_y_mean
 
+        # 프로파일 생성
         x_profile_data = generate_profile_data(explist_shifted_gauss, exptitles, profile_axis='x')
         y_profile_data = generate_profile_data(explist_shifted_gauss, exptitles, profile_axis='y')
 
@@ -87,31 +91,45 @@ def upload_directory():
         logging.error(f"Error in upload_directory: {str(e)}")
         logging.error(traceback.format_exc())
         return jsonify({'error': f'Server error: {str(e)}', 'traceback': traceback.format_exc()}), 500
+        
 
 @main_bp.route('/q-energyloss', methods=['POST'])
 def q_energy_loss():
     try:
+        # 세션에서 필요한 데이터를 로드
         explist_path = session.get('explist_path')
         exptitles = session.get('exptitles', [])
         gauss_y = session.get('gauss_peak_y_mean', None)
 
+        logging.debug(f"세션에서 로드된 데이터: explist_path={explist_path}, exptitles={exptitles}, gauss_peak_y_mean={gauss_y}")
+
         if not explist_path or not exptitles or gauss_y is None:
+            logging.error("Q-Energy Loss 변환을 위한 데이터가 누락됨")
             return jsonify({'error': 'Missing data for Q-Energy Loss transformation'}), 400
 
+        # explist_shifted_gauss.pkl 파일 로드
         explist = load_dataframe_from_file(explist_path)
-        q_plot_bytes, transformed_explist = plot_data_with_q_conversion(explist, exptitles, gauss_y)
-        q_plot_url = save_image(q_plot_bytes.getvalue(), 'q_output_plot.png')
+        logging.debug(f"로드된 Explist 크기: {len(explist)}")
 
-        # Update session data
+        # Q 변환 수행
+        q_plot_bytes, transformed_explist = plot_data_with_q_conversion(explist, exptitles, gauss_y)
+        logging.debug(f"Q 변환 후 데이터프레임 크기: {len(transformed_explist)}")
+
+        # Q 변환된 데이터를 파일로 저장
+        q_plot_url = save_image(q_plot_bytes.getvalue(), 'q_output_plot.png')
+        logging.debug(f"Q 변환된 이미지 URL: {q_plot_url}")
+
         transformed_explist_path = save_dataframe_to_file(transformed_explist, 'explist_q_converted.pkl')
         session['explist_path'] = transformed_explist_path
+        logging.debug(f"세션에 저장된 변환된 explist 경로: {transformed_explist_path}")
 
         return jsonify({'success': True, 'q_plot': q_plot_url})
 
     except Exception as e:
-        logging.error(f"Error in q_energy_loss: {str(e)}")
+        logging.error(f"q_energy_loss에서 오류 발생: {str(e)}")
         logging.error(traceback.format_exc())
         return jsonify({'error': f'Server error: {str(e)}', 'traceback': traceback.format_exc()}), 500
+
 
 @main_bp.route('/transform', methods=['POST'])
 def transform():

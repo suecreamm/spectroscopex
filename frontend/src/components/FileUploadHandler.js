@@ -68,9 +68,32 @@ export function initializeFileUploadHandler() {
     async function saveSessionData() {
         try {
             const formData = new FormData();
-            formData.append('filePaths', new Blob([JSON.stringify(lastUploadedData.explist_shifted_gauss)], { type: 'application/json' }), 'data.json');
+    
+            // 데이터가 올바르게 존재하는지 확인
+            if (lastUploadedData && lastUploadedData.explist_shifted_gauss) {
+                console.log('Adding data.json to FormData');
+                const jsonData = {
+                    explist_shifted_gauss: lastUploadedData.explist_shifted_gauss,
+                    exptitles: lastUploadedData.exptitles,
+                    gauss_peak_x_mean: lastUploadedData.gauss_peak_x_mean,
+                    gauss_peak_y_mean: lastUploadedData.gauss_peak_y_mean
+                };
+                formData.append('data.json', new Blob([JSON.stringify(jsonData)], { type: 'application/json' }));
+            } else {
+                console.error('lastUploadedData or explist_shifted_gauss is missing');
+                return;
+            }
+    
+            // q_energyloss 상태 추가
+            console.log('Appending q_energyloss state');
             formData.append('q_energyloss', isQEnergyLossEnabled ? 'true' : 'false');
     
+            // FormData에 추가된 항목 확인
+            for (let pair of formData.entries()) {
+                console.log(`FormData entry - ${pair[0]}: ${pair[1]}`);
+            }
+    
+            console.log('Uploading data to server...');
             const response = await fetch('http://localhost:7654/upload-directory', {
                 method: 'POST',
                 body: formData,
@@ -84,23 +107,26 @@ export function initializeFileUploadHandler() {
         } catch (error) {
             console.error('Failed to save session data:', error);
         }
-    }    
+    } 
+    
 
     async function requestQPlot() {
-        if (!lastUploadedData || !lastUploadedData.explist_shifted_gauss) {
-            console.error('No explist_shifted_gauss data available for Q-Plot request.');
+        if (!lastUploadedData || !lastUploadedData.pkl_file) {
+            console.error('No pkl_file path available for Q-Plot request.');
             updateUploadMessage('No data available to generate Q-Plot.');
             return;
         }
     
+        console.log('Q-Plot을 위한 데이터:', lastUploadedData);
+    
         try {
             const payload = {
                 action: 'q_conversion',
-                explist: lastUploadedData.explist_shifted_gauss,
-                exptitles: lastUploadedData.exptitles,
-                gauss_peak_y_mean: lastUploadedData.gauss_peak_y_mean,
+                pkl_file: lastUploadedData.pkl_file,  // pkl 파일 경로를 전달
                 q_energy_loss_enabled: true,
             };
+    
+            console.log('보낼 페이로드:', payload);
     
             const response = await fetch('http://localhost:7654/q-energyloss', {
                 method: 'POST',
@@ -113,7 +139,7 @@ export function initializeFileUploadHandler() {
             }
     
             const data = await response.json();
-            console.log('Q-Plot received and updating image.');
+            console.log('Q-Plot 수신 및 이미지 업데이트 중.');
     
             if (data.q_plot) {
                 updatePreviewImage(data.q_plot);
@@ -123,7 +149,7 @@ export function initializeFileUploadHandler() {
         } catch (error) {
             console.error('Failed to retrieve Q-Plot:', error);
         }
-    }   
+    }    
     
     
     function togglePlotVisibility() {
@@ -147,19 +173,19 @@ export function initializeFileUploadHandler() {
             updateUploadMessage('No files selected');
             return;
         }
-
+    
         const formData = new FormData();
-
+    
         for (const file of files) {
             console.log(`Appending file: ${file.name}`);
             formData.append('filePaths', file, file.name);
         }
-
+    
         if (isQEnergyLossEnabled) {
             console.log('Appending q_energyloss to form data.');
             formData.append('q_energyloss', 'true');
         }
-
+    
         try {
             updateUploadMessage('Uploading files...');
             console.log('Uploading files to server...');
@@ -168,28 +194,23 @@ export function initializeFileUploadHandler() {
                 body: formData,
                 mode: 'cors',
             });
-
+    
             if (!response.ok) {
                 throw new Error(`Server error ${response.status}: ${response.statusText}`);
             }
-
+    
             const data = await response.json();
             console.log('Files uploaded successfully.');
+            console.log('Server response:', data);
+            
             lastUploadedData = data;
-            if (!initialUploadedData) {
-                initialUploadedData = JSON.parse(JSON.stringify(data));
-                console.log('Initial uploaded data stored.');
-            }
-
+    
+            // 프로파일 플롯 업데이트
             updateProfilePlots(data.profiles);
-
-            updatePreviewImage(data.image);
-
-            if (isQEnergyLossEnabled) {
-                await requestQPlot();
-                qConversionPerformed = true;
-            }
-
+    
+            // 메인 이미지(previewImage) 업데이트
+            updatePreviewImage(data.image);  // 여기서 output_plot.png를 previewImage에 설정
+    
             updateUploadMessage('Files uploaded and processed successfully.');
         } catch (error) {
             console.error('Failed to upload and process the file:', error);
@@ -197,32 +218,32 @@ export function initializeFileUploadHandler() {
         }
     }
 
-
     function updateProfilePlots(profiles) {
         console.log('Updating profile plots.');
         if (!profiles) {
             console.error('Profiles data is undefined or null.');
             return;
         }
-
+    
         if (!profiles.x_profile || !profiles.y_profile) {
             console.error('x_profile or y_profile data is missing.');
             return;
         }
-
+    
         updateProfilePlot(profiles.x_profile, elements.xProfilePlot, 'saveXProfileBtn');
         updateProfilePlot(profiles.y_profile, elements.yProfilePlot, 'saveYProfileBtn');
     }
 
+    
     function updateProfilePlot(profileData, plotElement, saveBtnId) {
         if (profileData && profileData.image) {
             console.log(`Updating profile plot: ${saveBtnId}`);
-
+    
             let imageUrl = profileData.image;
             if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
                 imageUrl = `http://localhost:7654${imageUrl}`;
             }
-
+    
             plotElement.src = imageUrl;
             plotElement.style.display = "block";
             document.getElementById(saveBtnId).style.display = 'inline-block';
@@ -230,31 +251,31 @@ export function initializeFileUploadHandler() {
             console.warn(`No profile data available for: ${saveBtnId}`);
         }
     }
-
+    
     function updatePreviewImage(imageUrl) {
         const imgElement = document.getElementById('previewImage');
-
+    
         let absoluteImageUrl = imageUrl;
         if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
             absoluteImageUrl = `http://localhost:7654${imageUrl}`;
         }
-
+    
         const timestamp = new Date().getTime();
         const cacheBustedUrl = `${absoluteImageUrl}?t=${timestamp}`;
-
+    
         imgElement.onload = () => {
             console.log('Image loaded successfully.');
             imgElement.style.display = 'block';
         };
-
+    
         imgElement.onerror = () => {
             console.error('Error loading image.');
         };
-
+    
         imgElement.src = cacheBustedUrl;
         console.log(`Updating preview image with URL: ${cacheBustedUrl}`);
     }
-
+    
     function initializeEventListeners() {
         console.log('Initializing event listeners.');
         elements.fileInput.addEventListener('change', handleFileUpload);
@@ -286,8 +307,8 @@ export function initializeFileUploadHandler() {
     }
 
     async function sendTransformRequest(action) {
-        console.log(`sendTransformRequest called with action: ${action}`);
-
+        console.log(`sendTransformRequest 호출됨, action: ${action}`);
+    
         const dataToSend = {
             action: action,
             explist: lastUploadedData.explist_shifted_gauss || [],
@@ -295,16 +316,15 @@ export function initializeFileUploadHandler() {
             gauss_peak_y_mean: lastUploadedData.gauss_peak_y_mean || [],
             q_energy_loss_enabled: qConversionPerformed && isQEnergyLossEnabled
         };
-
+    
         if (dataToSend.explist.length === 0) {
-            console.error('explist is empty. Aborting request.');
+            console.error('explist가 비어 있음. 요청 중단됨.');
             return;
         }
-
-        console.log("Data to send:", dataToSend);
-
+    
+        console.log("서버로 보낼 데이터:", dataToSend);
+    
         try {
-            console.log("Sending transform request to server...");
             const response = await fetch('http://localhost:7654/transform', {
                 method: 'POST',
                 headers: {
@@ -312,22 +332,23 @@ export function initializeFileUploadHandler() {
                 },
                 body: JSON.stringify(dataToSend)
             });
-
+    
             if (!response.ok) {
-                throw new Error(`Server error ${response.status}: ${response.statusText}`);
+                throw new Error(`서버 오류 ${response.status}: ${response.statusText}`);
             }
-
+    
             const result = await response.json();
             if (result.success) {
-                console.log("Transformation successful. Result:", result);
+                console.log("변환 성공. 결과:", result);
                 updatePreviewImage(result.image);
             } else {
-                console.error("Transformation failed:", result.error);
+                console.error("변환 실패:", result.error);
             }
         } catch (error) {
-            console.error("Error in sendTransformRequest:", error);
+            console.error("sendTransformRequest에서 오류 발생:", error);
         }
     }
+    
 
     function loadImage() {
         console.log('loadImage called.');
