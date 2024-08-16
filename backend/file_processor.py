@@ -114,4 +114,41 @@ def save_dataframe_to_file(df, file_path=None):
     return file_path
 
 def load_dataframe_from_file(file_path):
-    return pd.read_csv(file_path, index_col=0)
+    try:
+        logging.debug(f"Attempting to load file from path: {file_path}")
+        
+        # 파일 확장자 확인
+        _, file_extension = os.path.splitext(file_path)
+        logging.debug(f"File extension detected: {file_extension}")
+
+        if file_extension == '.pkl':
+            logging.debug(f"Loading pkl file: {file_path}")
+            # pkl 파일을 로드하여 딕셔너리 형태로 반환
+            with open(file_path, 'rb') as file:
+                data = pickle.load(file)
+                logging.debug(f"Successfully loaded pkl file: {file_path}")
+                
+                # pkl 파일의 데이터 구조에 대한 추가 디버깅 정보
+                if isinstance(data, dict):
+                    logging.debug(f"pkl file contains a dictionary with keys: {list(data.keys())}")
+                elif isinstance(data, list):
+                    logging.debug(f"pkl file contains a list with length: {len(data)}")
+                else:
+                    logging.debug(f"pkl file contains an object of type: {type(data)}")
+                
+                return data
+
+        elif file_extension == '.csv':
+            logging.debug(f"Loading csv file: {file_path}")
+            # csv 파일을 로드하여 데이터프레임으로 반환
+            data = pd.read_csv(file_path, index_col=0)
+            logging.debug(f"Successfully loaded csv file: {file_path}, shape: {data.shape}")
+            return data
+
+        else:
+            logging.error(f"Unsupported file type: {file_extension}")
+            return None
+
+    except Exception as e:
+        logging.error(f"Error occurred while loading file: {file_path}, Error: {str(e)}")
+        return None

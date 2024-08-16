@@ -162,24 +162,25 @@ h1, h2, h3, h4, h5, h6, .title, .btn, .button {
   transition: background-color 0.3s ease, transform 0.3s ease, color 0.3s ease;
 }
 
-#flipUdBtn, #flipLrBtn, #rotateCcw90Btn, #rotateCw90Btn {
+#flipUdBtn, #flipLrBtn, #rotateCcw90Btn, #rotateCw90Btn, #blurBtn, #sharpenBtn {
   width: 36px;
   height: 36px;
   transition: background-color 0.3s ease, transform 0.3s ease, color 0.3s ease;
 }
 
-#flipUdBtn img, #flipLrBtn img, #rotateCcw90Btn img, #rotateCw90Btn img {
+#flipUdBtn img, #flipLrBtn img, #rotateCcw90Btn img, #rotateCw90Btn img, #blurBtn img, #sharpenBtn img {
   width: 20px;
   height: 20px;
   transform: scale(1.2);
 }
 
-#flipUdBtn:hover, #flipLrBtn:hover, #rotateCcw90Btn:hover, #rotateCw90Btn:hover {
+#flipUdBtn:hover, #flipLrBtn:hover, #rotateCcw90Btn:hover, #rotateCw90Btn:hover,
+#blurBtn:hover, #sharpenBtn:hover  {
   background-color: #555;
 }
 
 #flipUdBtn:hover img, #flipLrBtn:hover img, #rotateCcw90Btn:hover img, #rotateCw90Btn:hover img,
-#resetBtn:hover img {
+#resetBtn:hover img, #blurBtn:hover img, #sharpenBtn:hover img {
   filter: invert(1) brightness(2);
 }
 
