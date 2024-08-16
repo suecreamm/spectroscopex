@@ -10,6 +10,7 @@ from plotter import shift_and_preview, plot_data_with_q_conversion
 from profile_analyzer import generate_profile_data
 from transformer import transform_data
 import uuid
+import json
 import pickle
 from utils import save_image, save_dataframe_to_file, load_dataframe_from_file
 
@@ -96,14 +97,21 @@ def upload_directory():
 @main_bp.route('/q-energyloss', methods=['POST'])
 def q_energy_loss():
     try:
-        # 세션에서 필요한 데이터를 로드
-        explist_path = session.get('explist_path')
-        exptitles = session.get('exptitles', [])
-        gauss_y = session.get('gauss_peak_y_mean', None)
+        if 'data.json' not in request.files:
+            logging.error("data.json 파일이 요청에 포함되지 않음")
+            return jsonify({"error": "data.json 파일이 요청에 포함되지 않음"}), 400
 
-        logging.debug(f"세션에서 로드된 데이터: explist_path={explist_path}, exptitles={exptitles}, gauss_peak_y_mean={gauss_y}")
+        # data.json 파일 처리
+        data_file = request.files['data.json']
+        data = json.load(data_file)
 
-        if not explist_path or not exptitles or gauss_y is None:
+        explist_path = data.get('explist_shifted_gauss')
+        exptitles = data.get('exptitles', [])
+        gauss_peak_y_mean = data.get('gauss_peak_y_mean', None)
+
+        logging.debug(f"로드된 데이터: explist_path={explist_path}, exptitles={exptitles}, gauss_peak_y_mean={gauss_peak_y_mean}")
+
+        if not explist_path or not exptitles or gauss_peak_y_mean is None:
             logging.error("Q-Energy Loss 변환을 위한 데이터가 누락됨")
             return jsonify({'error': 'Missing data for Q-Energy Loss transformation'}), 400
 
@@ -112,7 +120,7 @@ def q_energy_loss():
         logging.debug(f"로드된 Explist 크기: {len(explist)}")
 
         # Q 변환 수행
-        q_plot_bytes, transformed_explist = plot_data_with_q_conversion(explist, exptitles, gauss_y)
+        q_plot_bytes, transformed_explist = plot_data_with_q_conversion(explist, exptitles, gauss_peak_y_mean)
         logging.debug(f"Q 변환 후 데이터프레임 크기: {len(transformed_explist)}")
 
         # Q 변환된 데이터를 파일로 저장
