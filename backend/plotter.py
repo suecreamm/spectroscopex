@@ -6,6 +6,8 @@ import math
 from scipy.optimize import curve_fit
 from io import BytesIO
 import logging
+import pickle
+import logging
 
 plt.switch_backend('Agg')
 
@@ -249,7 +251,7 @@ def origin_dataframes(explist, peak_x, peak_y, exptitles, save=False, filename=N
 
 def shift_and_preview(explist, exptitles, plot=True):
     if not explist or not exptitles:
-        logging.error("Explist or exptitles is empty.")
+        logging.error("Explist 또는 exptitles이 비어 있음")
         return None, None, [], None
 
     logging.debug(f"Received explist: {explist}")
@@ -258,13 +260,27 @@ def shift_and_preview(explist, exptitles, plot=True):
     gauss_peak_x_mean, _ = plot_x_profiles(explist, exptitles, method='mean', col_nums=4)
     gauss_peak_y_mean, _ = plot_y_profiles(explist, exptitles, method='mean', col_nums=4)
 
+    # 원점 이동된 데이터프레임 생성
     explist_shifted_gauss = origin_dataframes(explist.copy(), gauss_peak_x_mean, gauss_peak_y_mean, exptitles, save=True, filename="gauss_shifted")
+
+    # explist_shifted_gauss, exptitles, gauss_peak_x, gauss_peak_y를 함께 저장
+    data_to_save = {
+        "explist_shifted_gauss": explist_shifted_gauss,
+        "exptitles": exptitles,
+        "gauss_peak_x_mean": gauss_peak_x_mean,
+        "gauss_peak_y_mean": gauss_peak_y_mean
+    }
+    
+    with open("explist_shifted_gauss.pkl", "wb") as f:
+        pickle.dump(data_to_save, f)
+        logging.info("Data saved to explist_shifted_gauss.pkl")
 
     img_bytes = None
     if plot:
         img_bytes = create_plot(explist_shifted_gauss, exptitles)
 
     return gauss_peak_x_mean, gauss_peak_y_mean, explist_shifted_gauss, img_bytes
+
 
 def angle_to_q(angle, E0, E_loss):
     if E_loss < 0 or angle < 0:
