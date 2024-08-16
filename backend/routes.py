@@ -13,6 +13,7 @@ import uuid
 import json
 import pickle
 from utils import save_image, save_dataframe_to_file, load_dataframe_from_file
+import pandas as pd
 
 main_bp = Blueprint('main', __name__)
 
@@ -99,12 +100,16 @@ def q_energy_loss():
     try:
         if 'data.json' not in request.files:
             logging.error("data.json 파일이 요청에 포함되지 않음")
-            return jsonify({"error": "data.json 파일이 요청에 포함되지 않음"}), 400
+            return jsonify({'error': 'data.json 파일이 요청에 포함되지 않음'}), 400
 
-        # data.json 파일 처리
         data_file = request.files['data.json']
+        logging.debug(f"Received data.json file: {data_file.filename}, size: {data_file.content_length} bytes")
+        
+        data_file.seek(0)  # 파일 포인터 초기화
         data = json.load(data_file)
+        logging.debug(f"Loaded data from data.json: {data}")
 
+        # explist_shifted_gauss.pkl 파일 경로를 data.json에서 가져옴
         explist_path = data.get('explist_shifted_gauss')
         exptitles = data.get('exptitles', [])
         gauss_peak_y_mean = data.get('gauss_peak_y_mean', None)
@@ -116,20 +121,20 @@ def q_energy_loss():
             return jsonify({'error': 'Missing data for Q-Energy Loss transformation'}), 400
 
         # explist_shifted_gauss.pkl 파일 로드
-        explist = load_dataframe_from_file(explist_path)
-        logging.debug(f"로드된 Explist 크기: {len(explist)}")
+        explist_data = load_dataframe_from_file(explist_path)
+        if explist_data is None:
+            logging.error(f"파일 {explist_path}을 로드하지 못함")
+            return jsonify({'error': f'Failed to load explist data from {explist_path}'}), 500
+        
+        logging.debug(f"로드된 Explist 데이터: {explist_data}")
 
-        # Q 변환 수행
-        q_plot_bytes, transformed_explist = plot_data_with_q_conversion(explist, exptitles, gauss_peak_y_mean)
-        logging.debug(f"Q 변환 후 데이터프레임 크기: {len(transformed_explist)}")
-
-        # Q 변환된 데이터를 파일로 저장
+        # Q 변환 및 새로운 데이터 생성
+        q_plot_bytes, transformed_explist = plot_data_with_q_conversion(explist_data, exptitles, gauss_peak_y_mean)
         q_plot_url = save_image(q_plot_bytes.getvalue(), 'q_output_plot.png')
-        logging.debug(f"Q 변환된 이미지 URL: {q_plot_url}")
 
+        # Q 변환된 explist 데이터를 새로운 파일로 저장
         transformed_explist_path = save_dataframe_to_file(transformed_explist, 'explist_q_converted.pkl')
         session['explist_path'] = transformed_explist_path
-        logging.debug(f"세션에 저장된 변환된 explist 경로: {transformed_explist_path}")
 
         return jsonify({'success': True, 'q_plot': q_plot_url})
 
@@ -137,7 +142,7 @@ def q_energy_loss():
         logging.error(f"q_energy_loss에서 오류 발생: {str(e)}")
         logging.error(traceback.format_exc())
         return jsonify({'error': f'Server error: {str(e)}', 'traceback': traceback.format_exc()}), 500
-
+    
 
 @main_bp.route('/transform', methods=['POST'])
 def transform():

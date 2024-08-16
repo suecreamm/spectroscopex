@@ -63,7 +63,7 @@
                                 <div class="row gtr-50">
                                     <div class="col-12">
                                         <div class="tabs">
-                                            <div class="tab active" data-content="preview">
+                                            <div class="tab active" data-content="preview" id="previewTab">
                                                 <i class="fa-solid fa-magnifying-glass"></i> Preview
                                             </div>
                                             <div class="tab" data-content="x_profile">
@@ -105,6 +105,12 @@
                                                 <div class="subtab-action-button" id="rotateCw90Btn">
                                                     <img src="assets/icons/rotateCW.svg" alt="Rotate CW 90 degree" />
                                                 </div>
+                                                <div class="subtab-action-button" id="blurBtn">
+                                                    <img src="assets/icons/blur.svg" alt="Blur" />
+                                                </div>
+                                                <div class="subtab-action-button" id="sharpenBtn">
+                                                    <img src="assets/icons/sharpen.svg" alt="Sharpen" />
+                                                </div>
                                                 <div class="subtab-action-button" id="resetBtn">
                                                     <img src="assets/icons/reset.svg" alt="Reset" />
                                                 </div>
@@ -123,7 +129,7 @@
                                                     <i class="fa-solid fa-image"></i> Save Image
                                                 </button>
                                                 <button id="exportCSVBtn" class="save-button">
-                                                    <i class="fa-solid fa-floppy-disk"></i> Export CSV
+                                                    <i class="fa-solid fa-floppy-disk"></i> Export as CSV
                                                 </button>  
                                             </div>
                                         </div>
@@ -136,7 +142,12 @@
                                             <div class="image-container">
                                                 <img id="x_profile_plot" alt="X-Profile Plot" style="display:none;">
                                                 <div class="button-container">
-                                                    <button id="saveXProfileBtn" class="save-button primary"><i class="fa-solid fa-download"></i> Save Image</button>
+                                                    <button id="saveImageXProfileBtn" class="save-button primary">
+                                                        <i class="fa-solid fa-download"></i> Save Image
+                                                    </button>
+                                                    <button id="exportCSVXProfileBtn" class="save-button">
+                                                        <i class="fa-solid fa-floppy-disk"></i> Export as CSV
+                                                    </button>
                                                 </div>                                                
                                             </div>
                                         </div>
@@ -148,7 +159,12 @@
                                             <div class="image-container">
                                                 <img id="y_profile_plot" alt="Y-Profile Plot" style="display:none;">
                                                 <div class="button-container">
-                                                    <button id="saveYProfileBtn" class="save-button primary"><i class="fa-solid fa-download"></i> Save Image</button>
+                                                    <button id="saveImageYProfileBtn" class="save-button primary">
+                                                        <i class="fa-solid fa-download"></i> Save Image
+                                                    </button>
+                                                    <button id="exportCSVYProfileBtn" class="save-button">
+                                                        <i class="fa-solid fa-floppy-disk"></i> Export as CSV
+                                                    </button>
                                                 </div>
                                                 
                                             </div>

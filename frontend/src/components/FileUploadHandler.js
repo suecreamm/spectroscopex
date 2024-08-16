@@ -3,15 +3,18 @@ export function initializeFileUploadHandler() {
         fileInput: document.getElementById('fileInput'),
         previewImage: document.getElementById('previewImage'),
         viewAllBtn: document.getElementById('viewAllBtn'),
-        previewTab: document.querySelector('.tab[data-content="preview"]'),
+        previewTab: document.getElementById('previewTab'),
         xProfileTab: document.querySelector('.tab[data-content="x_profile"]'),
         yProfileTab: document.querySelector('.tab[data-content="y_profile"]'),
         uploadMessage: document.getElementById('uploadMessage'),
         xProfilePlot: document.getElementById('x_profile_plot'),
         yProfilePlot: document.getElementById('y_profile_plot'),
-        savePreviewBtn: document.getElementById('savePreviewBtn'),
-        saveXProfileBtn: document.getElementById('saveXProfileBtn'),
-        saveYProfileBtn: document.getElementById('saveYProfileBtn'),
+        saveImageXProfileBtn: document.getElementById('saveImageXProfileBtn'), // 수정된 요소 이름
+        saveImageYProfileBtn: document.getElementById('saveImageYProfileBtn'), // 수정된 요소 이름
+        exportCSVXProfileBtn: document.getElementById('exportCSVXProfileBtn'), // 추가된 요소
+        exportCSVYProfileBtn: document.getElementById('exportCSVYProfileBtn'), // 추가된 요소
+        blurBtn: document.getElementById('blurBtn'), // 추가된 요소
+        sharpenBtn: document.getElementById('sharpenBtn'), // 추가된 요소
         exportCSVBtn: document.getElementById('exportCSVBtn'),
         qEnergyLossCheckbox: document.getElementById('q-energyloss'),
         flipUdBtn: document.getElementById('flipUdBtn'),
@@ -219,8 +222,8 @@ export function initializeFileUploadHandler() {
             return;
         }
     
-        updateProfilePlot(profiles.x_profile, elements.xProfilePlot, 'saveXProfileBtn');
-        updateProfilePlot(profiles.y_profile, elements.yProfilePlot, 'saveYProfileBtn');
+        updateProfilePlot(profiles.x_profile, elements.xProfilePlot, 'saveImageXProfileBtn');
+        updateProfilePlot(profiles.y_profile, elements.yProfilePlot, 'saveImageYProfileBtn');
     }
 
     
@@ -271,14 +274,17 @@ export function initializeFileUploadHandler() {
         elements.viewAllBtn.addEventListener('click', loadImage);
         elements.previewTab.addEventListener('click', loadImage);
         
-        if (elements.savePreviewBtn) {
-            elements.savePreviewBtn.addEventListener('click', () => saveImage(elements.previewImage, 'preview.png'));
+        if (elements.saveImageXProfileBtn) {  // 수정된 요소 이름
+            elements.saveImageXProfileBtn.addEventListener('click', () => saveImage(elements.xProfilePlot, 'x_profile.png'));
         }
-        if (elements.saveXProfileBtn) {
-            elements.saveXProfileBtn.addEventListener('click', () => saveImage(elements.xProfilePlot, 'x_profile.png'));
+        if (elements.exportCSVXProfileBtn) {  // 추가된 이벤트 리스너
+            elements.exportCSVXProfileBtn.addEventListener('click', exportCSVFiles);
         }
-        if (elements.saveYProfileBtn) {
-            elements.saveYProfileBtn.addEventListener('click', () => saveImage(elements.yProfilePlot, 'y_profile.png'));
+        if (elements.saveImageYProfileBtn) {  // 수정된 요소 이름
+            elements.saveImageYProfileBtn.addEventListener('click', () => saveImage(elements.yProfilePlot, 'y_profile.png'));
+        }
+        if (elements.exportCSVYProfileBtn) {  // 추가된 이벤트 리스너
+            elements.exportCSVYProfileBtn.addEventListener('click', exportCSVFiles);
         }
         if (elements.exportCSVBtn) {
             elements.exportCSVBtn.addEventListener('click', exportCSVFiles);
@@ -292,6 +298,8 @@ export function initializeFileUploadHandler() {
         elements.flipLrBtn.addEventListener('click', () => sendTransformRequest('flip_lr'));
         elements.rotateCcw90Btn.addEventListener('click', () => sendTransformRequest('rotate_ccw90'));
         elements.rotateCw90Btn.addEventListener('click', () => sendTransformRequest('rotate_cw90'));
+        elements.blurBtn.addEventListener('click', () => sendTransformRequest('blur')); // 추가된 이벤트 리스너
+        elements.sharpenBtn.addEventListener('click', () => sendTransformRequest('sharpen')); // 추가된 이벤트 리스너
         elements.resetBtn.addEventListener('click', () => sendTransformRequest('reset'));
     }
 
