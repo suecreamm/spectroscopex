@@ -341,10 +341,10 @@ def process_q_values(q_values, debugging=True):
 
 def plot_data_with_q_conversion(explist, exptitles, gauss_y, num_cols=2,
                                 q_min=None, q_max=None, E_min=None, E_max=None,
-                                figsize=(6, 5), title_fontsize=20, label_fontsize=14,
+                                figsize=(6, 5), title_fontsize=24, label_fontsize=16,
                                 cbar_pos=[0.92, 0.063, 0.02, 0.15], cmap='inferno',
                                 font_family='sans-serif', font_style='normal', font_weight='normal',
-                                num_ticks_x=5, num_ticks_y=5, tick_fontsize=12,
+                                num_ticks_x=5, num_ticks_y=5, tick_fontsize=14,
                                 apply_log=True, original_explist=None):
     print(f"Received E0 values: {gauss_y}")
     print(f"Q-Energy Loss Enabled: {q_min is not None or q_max is not None}")
