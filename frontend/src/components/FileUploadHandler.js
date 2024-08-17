@@ -4,17 +4,18 @@ export function initializeFileUploadHandler() {
         previewImage: document.getElementById('previewImage'),
         viewAllBtn: document.getElementById('viewAllBtn'),
         previewTab: document.getElementById('previewTab'),
+        previewTab: document.querySelector('.tab[data-content="preview"]'),
         xProfileTab: document.querySelector('.tab[data-content="x_profile"]'),
         yProfileTab: document.querySelector('.tab[data-content="y_profile"]'),
         uploadMessage: document.getElementById('uploadMessage'),
         xProfilePlot: document.getElementById('x_profile_plot'),
         yProfilePlot: document.getElementById('y_profile_plot'),
-        saveImageXProfileBtn: document.getElementById('saveImageXProfileBtn'), // 수정된 요소 이름
-        saveImageYProfileBtn: document.getElementById('saveImageYProfileBtn'), // 수정된 요소 이름
-        exportCSVXProfileBtn: document.getElementById('exportCSVXProfileBtn'), // 추가된 요소
-        exportCSVYProfileBtn: document.getElementById('exportCSVYProfileBtn'), // 추가된 요소
-        blurBtn: document.getElementById('blurBtn'), // 추가된 요소
-        sharpenBtn: document.getElementById('sharpenBtn'), // 추가된 요소
+        saveImageXProfileBtn: document.getElementById('saveImageXProfileBtn'),
+        saveImageYProfileBtn: document.getElementById('saveImageYProfileBtn'),
+        exportCSVXProfileBtn: document.getElementById('exportCSVXProfileBtn'),
+        exportCSVYProfileBtn: document.getElementById('exportCSVYProfileBtn'),
+        blurBtn: document.getElementById('blurBtn'),
+        sharpenBtn: document.getElementById('sharpenBtn'),
         exportCSVBtn: document.getElementById('exportCSVBtn'),
         qEnergyLossCheckbox: document.getElementById('q-energyloss'),
         flipUdBtn: document.getElementById('flipUdBtn'),
@@ -143,11 +144,18 @@ export function initializeFileUploadHandler() {
                 updatePreviewImage(data.q_plot);
             }
     
+            if (data.explist_q_converted) {
+                lastUploadedData.explist_q_converted = data.explist_q_converted;
+                console.log('explist_q_converted 경로 저장:', lastUploadedData.explist_q_converted);
+            } else {
+                console.warn('explist_q_converted 경로가 응답에 포함되지 않았습니다.');
+            }
+    
         } catch (error) {
             console.error('Failed to retrieve Q-Plot:', error);
         }
-    }  
-
+    }
+    
     
     function togglePlotVisibility() {
         console.log('Toggling plot visibility');
@@ -159,8 +167,10 @@ export function initializeFileUploadHandler() {
             updatePreviewImage(lastUploadedData.image);
         } else {
             console.warn('No image data available to display');
+            updateUploadMessage('No image data available for display.');
         }
     }
+    
 
     async function handleFileUpload(event) {
         console.log('handleFileUpload called.');
@@ -298,36 +308,46 @@ export function initializeFileUploadHandler() {
         elements.flipLrBtn.addEventListener('click', () => sendTransformRequest('flip_lr'));
         elements.rotateCcw90Btn.addEventListener('click', () => sendTransformRequest('rotate_ccw90'));
         elements.rotateCw90Btn.addEventListener('click', () => sendTransformRequest('rotate_cw90'));
-        elements.blurBtn.addEventListener('click', () => sendTransformRequest('blur')); // 추가된 이벤트 리스너
-        elements.sharpenBtn.addEventListener('click', () => sendTransformRequest('sharpen')); // 추가된 이벤트 리스너
+        elements.blurBtn.addEventListener('click', () => sendTransformRequest('blur'));
+        elements.sharpenBtn.addEventListener('click', () => sendTransformRequest('sharpen'));
         elements.resetBtn.addEventListener('click', () => sendTransformRequest('reset'));
     }
 
+
     async function sendTransformRequest(action) {
-        console.log(`sendTransformRequest 호출됨, action: ${action}`);
+        console.log("sendTransformRequest 호출됨, action:", action);
+        console.log("qConversionPerformed 상태:", qConversionPerformed);
+        console.log("lastUploadedData 상태:", lastUploadedData);
     
-        const dataToSend = {
-            action: action,
-            explist: lastUploadedData.explist_shifted_gauss || [],
-            exptitles: lastUploadedData.exptitles || [],
-            gauss_peak_y_mean: lastUploadedData.gauss_peak_y_mean || [],
-            q_energy_loss_enabled: qConversionPerformed && isQEnergyLossEnabled
-        };
+        // Q-Energy Loss가 수행된 경우, 변환된 explist_q_converted를 사용
+        const explistToUse = qConversionPerformed 
+            ? lastUploadedData.explist_q_converted 
+            : lastUploadedData.explist_shifted_gauss;
     
-        if (dataToSend.explist.length === 0) {
-            console.error('explist가 비어 있음. 요청 중단됨.');
+        console.log("선택된 explist:", explistToUse);
+    
+        // 필요한 데이터가 모두 있는지 확인
+        if (!explistToUse || !action || !lastUploadedData.exptitles) {
+            console.error('필수 데이터가 누락되었습니다.');
+            updateUploadMessage('Required data missing for transformation.');
             return;
         }
     
-        console.log("서버로 보낼 데이터:", dataToSend);
+        // 전송할 데이터를 구성
+        const dataToSend = {
+            action: action,
+            explist: explistToUse,
+            exptitles: lastUploadedData.exptitles,
+        };
+    
+        // FormData에 data.json으로 추가
+        const formData = new FormData();
+        formData.append('data.json', new Blob([JSON.stringify(dataToSend)], { type: 'application/json' }));
     
         try {
             const response = await fetch('http://localhost:7654/transform', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(dataToSend)
+                body: formData,
             });
     
             if (!response.ok) {
@@ -336,15 +356,23 @@ export function initializeFileUploadHandler() {
     
             const result = await response.json();
             if (result.success) {
-                console.log("변환 성공. 결과:", result);
                 updatePreviewImage(result.image);
+                // 변환된 explist 경로를 업데이트
+                if (qConversionPerformed) {
+                    lastUploadedData.explist_q_converted = result.explist_path;
+                } else {
+                    lastUploadedData.explist_shifted_gauss = result.explist_path;
+                }
             } else {
                 console.error("변환 실패:", result.error);
+                updateUploadMessage(`Transformation failed: ${result.error}`);
             }
         } catch (error) {
             console.error("sendTransformRequest에서 오류 발생:", error);
+            updateUploadMessage(`Error during transformation: ${error.message}`);
         }
     }
+    
     
 
     function loadImage() {
@@ -424,9 +452,12 @@ export function initializeFileUploadHandler() {
 
     function saveImage(imageElement, fileName) {
         console.log(`Saving image: ${fileName}`);
+        
         if (imageElement.src.startsWith('data:image')) {
+            // base64 data
             downloadImage(imageElement.src, fileName);
         } else {
+            // URL image
             fetch(imageElement.src)
                 .then(response => response.blob())
                 .then(blob => {
@@ -437,16 +468,16 @@ export function initializeFileUploadHandler() {
                 .catch(error => console.error('Error downloading image:', error));
         }
     }
-
+    
     function downloadImage(url, fileName) {
         const link = document.createElement('a');
         link.href = url;
-        link.download = fileName;
+        link.download = fileName;  // 이 파일명으로 다운로드
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     }
-
+    
     initializeEventListeners();
 
     return {
