@@ -7,14 +7,19 @@ const SERVER_URL = 'http://localhost:7654';
 let isSelectingDirectory = false;
 
 function createWindow() {
+    const privateSession = session.fromPartition('persist:private', {
+        cache: false,
+        storage: false
+    });
+
     const win = new BrowserWindow({
         width: 1000,
         height: 750,
         webPreferences: {
             preload: path.join(__dirname, 'frontend', 'preload.js'),
-            webSecurity: false,
-            contextIsolation: true,
-            nodeIntegration: false
+            session: privateSession, // Private mode in Chrome
+            nodeIntegration: true,
+            contextIsolation: false
         },
     });
   
