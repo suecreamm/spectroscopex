@@ -4,6 +4,7 @@ import pickle
 import uuid
 import logging
 import json
+from io import BytesIO
 
 
 def save_session_data(session_data, session_filename):
@@ -29,19 +30,37 @@ def load_session_data(session_filename):
 
 
 def save_image(image_data, filename):
+    # 저장할 디렉토리 경로 설정
     save_dir = os.path.join(os.getcwd(), 'static', 'images')
+    logging.debug(f"Save directory set to: {save_dir}")
+    
+    # 디렉토리가 존재하지 않으면 생성
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
         logging.debug(f"Created directory: {save_dir}")
 
+    # 저장할 파일의 전체 경로 설정
     file_path = os.path.join(save_dir, filename)
-    
+    logging.debug(f"File path set to: {file_path}")
+
     try:
         with open(file_path, 'wb') as f:
-            f.write(image_data)
+            # 데이터 타입 확인 및 저장
+            if isinstance(image_data, BytesIO):
+                logging.debug("Image data is of type BytesIO.")
+                data_to_write = image_data.getvalue()
+            else:
+                logging.debug("Image data is of type bytes.")
+                data_to_write = image_data
+            
+            # 실제 파일에 데이터 쓰기
+            f.write(data_to_write)
             logging.info(f"Image saved to {file_path}")
+            logging.debug(f"Image size: {len(data_to_write)} bytes")
+
     except Exception as e:
         logging.error(f"Failed to save image: {str(e)}")
+        logging.debug(f"Exception details: {traceback.format_exc()}")
         return None
 
     return f'/static/images/{filename}'

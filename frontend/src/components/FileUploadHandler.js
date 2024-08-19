@@ -3,7 +3,6 @@ export function initializeFileUploadHandler() {
         fileInput: document.getElementById('fileInput'),
         previewImage: document.getElementById('previewImage'),
         viewAllBtn: document.getElementById('viewAllBtn'),
-        previewTab: document.getElementById('previewTab'),
         previewTab: document.querySelector('.tab[data-content="preview"]'),
         xProfileTab: document.querySelector('.tab[data-content="x_profile"]'),
         yProfileTab: document.querySelector('.tab[data-content="y_profile"]'),
@@ -56,24 +55,23 @@ export function initializeFileUploadHandler() {
     
         if (isQEnergyLossEnabled && !qConversionPerformed) {
             try {
-                await saveSessionData(); // 세션 데이터 저장
-                await requestQPlot(); // Q-Plot 요청
+                await saveSessionData(); // Save session data
+                await requestQPlot(); // Request Q-Plot
                 qConversionPerformed = true;
             } catch (error) {
                 console.error('Error during Q-Energy Loss processing:', error);
                 updateUploadMessage(`Q-Energy Loss processing failed: ${error.message}`);
             }
         } else {
-            togglePlotVisibility(); // 기존 이미지 표시
+            togglePlotVisibility(); // Display the original image
         }
     }    
     
-
     async function saveSessionData() {
         try {
             const formData = new FormData();
     
-            // 데이터가 올바르게 존재하는지 확인
+            // Verify that the data exists correctly
             if (lastUploadedData && lastUploadedData.explist_shifted_gauss) {
                 console.log('Adding data.json to FormData');
                 formData.append('data.json', new Blob([JSON.stringify(lastUploadedData)], { type: 'application/json' }));
@@ -82,14 +80,9 @@ export function initializeFileUploadHandler() {
                 return;
             }
     
-            // q_energyloss 상태 추가
+            // Append q_energyloss state
             console.log('Appending q_energyloss state');
             formData.append('q_energyloss', isQEnergyLossEnabled ? 'true' : 'false');
-    
-            // FormData에 추가된 항목 확인
-            for (let pair of formData.entries()) {
-                console.log(`FormData entry - ${pair[0]}: ${pair[1]}`);
-            }
     
             console.log('Uploading data to server...');
             const response = await fetch('http://localhost:7654/upload-directory', {
@@ -103,7 +96,6 @@ export function initializeFileUploadHandler() {
     
             console.log('Session data saved successfully.');
     
-            // 세션 데이터 저장 후 Q-Plot을 요청
             if (isQEnergyLossEnabled) {
                 await requestQPlot();
             }
@@ -120,13 +112,11 @@ export function initializeFileUploadHandler() {
             return;
         }
     
-        console.log('Q-Plot을 위한 데이터:', lastUploadedData);
+        console.log('Requesting Q-Plot with data:', lastUploadedData);
     
         try {
             const formData = new FormData();
             formData.append('data.json', new Blob([JSON.stringify(lastUploadedData)], { type: 'application/json' }));
-    
-            console.log('보낼 페이로드:', lastUploadedData);
     
             const response = await fetch('http://localhost:7654/q-energyloss', {
                 method: 'POST',
@@ -138,17 +128,18 @@ export function initializeFileUploadHandler() {
             }
     
             const data = await response.json();
-            console.log('Q-Plot 수신 및 이미지 업데이트 중.');
+            console.log('Received Q-Plot and updating image.');
     
             if (data.q_plot) {
-                updatePreviewImage(data.q_plot);
+                // Assuming data.q_plot is a URL pointing to the image
+                updatePreviewImage(data.q_plot, 'url');  // 'url' indicates that this is a URL path to the image
             }
     
             if (data.explist_q_converted) {
                 lastUploadedData.explist_q_converted = data.explist_q_converted;
-                console.log('explist_q_converted 경로 저장:', lastUploadedData.explist_q_converted);
+                console.log('Stored explist_q_converted path:', lastUploadedData.explist_q_converted);
             } else {
-                console.warn('explist_q_converted 경로가 응답에 포함되지 않았습니다.');
+                console.warn('explist_q_converted path was not included in the response.');
             }
     
         } catch (error) {
@@ -161,10 +152,10 @@ export function initializeFileUploadHandler() {
         console.log('Toggling plot visibility');
         if (isQEnergyLossEnabled && lastUploadedData.q_plot) {
             console.log('Displaying Q-Plot');
-            updatePreviewImage(lastUploadedData.q_plot);
+            updatePreviewImage(lastUploadedData.q_plot, 'bytesio');
         } else if (lastUploadedData.image) {
             console.log('Displaying preview image');
-            updatePreviewImage(lastUploadedData.image);
+            updatePreviewImage(lastUploadedData.image, 'url');
         } else {
             console.warn('No image data available to display');
             updateUploadMessage('No image data available for display.');
@@ -190,7 +181,6 @@ export function initializeFileUploadHandler() {
     
         try {
             updateUploadMessage('Uploading files...');
-            console.log('Uploading files to server...');
             const response = await fetch('http://localhost:7654/upload-directory', {
                 method: 'POST',
                 body: formData,
@@ -205,7 +195,7 @@ export function initializeFileUploadHandler() {
             lastUploadedData = data;
     
             updateProfilePlots(data.profiles);
-            updatePreviewImage(data.image);
+            updatePreviewImage(data.image, 'url');
     
             if (isQEnergyLossEnabled) {
                 await requestQPlot();
@@ -236,17 +226,10 @@ export function initializeFileUploadHandler() {
         updateProfilePlot(profiles.y_profile, elements.yProfilePlot, 'saveImageYProfileBtn');
     }
 
-    
     function updateProfilePlot(profileData, plotElement, saveBtnId) {
         if (profileData && profileData.image) {
             console.log(`Updating profile plot: ${saveBtnId}`);
-    
-            let imageUrl = profileData.image;
-            if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
-                imageUrl = `http://localhost:7654${imageUrl}`;
-            }
-    
-            plotElement.src = imageUrl;
+            updatePreviewImage(profileData.image, 'url');
             plotElement.style.display = "block";
             document.getElementById(saveBtnId).style.display = 'inline-block';
         } else {
@@ -254,29 +237,39 @@ export function initializeFileUploadHandler() {
         }
     }
 
-    function updatePreviewImage(imageUrl) {
+    function updatePreviewImage(imageData, dataType = 'url') {
         const imgElement = document.getElementById('previewImage');
     
-        let absoluteImageUrl = imageUrl;
-        if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
-            absoluteImageUrl = `http://localhost:7654${imageUrl}`;
-        }
-    
-        const timestamp = new Date().getTime();
-        const cacheBustedUrl = `${absoluteImageUrl}?t=${timestamp}`;
-    
-        imgElement.onload = () => {
-            console.log('Image loaded successfully.');
+        if (dataType === 'bytesio') {
+            if (!imageData.startsWith('data:image/')) {
+                imageData = `data:image/png;base64,${imageData}`;
+            }
+            imgElement.src = imageData;
             imgElement.style.display = 'block';
-        };
+            console.log('Displaying image from Base64 encoded data.');
+        } else {
+            let absoluteImageUrl = imageData;
+            if (!imageData.startsWith('http://') && !imageData.startsWith('https://')) {
+                absoluteImageUrl = `http://localhost:7654${imageData}`;
+            }
     
-        imgElement.onerror = () => {
-            console.error('Error loading image.');
-        };
+            const timestamp = new Date().getTime();
+            const cacheBustedUrl = `${absoluteImageUrl}?t=${timestamp}`;
     
-        imgElement.src = cacheBustedUrl;
-        console.log(`Updating preview image with URL: ${cacheBustedUrl}`);
+            imgElement.onload = () => {
+                console.log('Image loaded successfully.');
+                imgElement.style.display = 'block';
+            };
+    
+            imgElement.onerror = () => {
+                console.error('Error loading image.');
+            };
+    
+            imgElement.src = cacheBustedUrl;
+            console.log(`Updating preview image with URL: ${cacheBustedUrl}`);
+        }
     }
+
     
     function initializeEventListeners() {
         console.log('Initializing event listeners.');
@@ -284,26 +277,12 @@ export function initializeFileUploadHandler() {
         elements.viewAllBtn.addEventListener('click', loadImage);
         elements.previewTab.addEventListener('click', loadImage);
         
-        if (elements.saveImageXProfileBtn) {  // 수정된 요소 이름
-            elements.saveImageXProfileBtn.addEventListener('click', () => saveImage(elements.xProfilePlot, 'x_profile.png'));
-        }
-        if (elements.exportCSVXProfileBtn) {  // 추가된 이벤트 리스너
-            elements.exportCSVXProfileBtn.addEventListener('click', exportCSVFiles);
-        }
-        if (elements.saveImageYProfileBtn) {  // 수정된 요소 이름
-            elements.saveImageYProfileBtn.addEventListener('click', () => saveImage(elements.yProfilePlot, 'y_profile.png'));
-        }
-        if (elements.exportCSVYProfileBtn) {  // 추가된 이벤트 리스너
-            elements.exportCSVYProfileBtn.addEventListener('click', exportCSVFiles);
-        }
-        if (elements.exportCSVBtn) {
-            elements.exportCSVBtn.addEventListener('click', exportCSVFiles);
-        }
-
-        if (elements.qEnergyLossCheckbox) {
-            elements.qEnergyLossCheckbox.addEventListener('change', handleQEnergyLossChange);
-        }
-
+        elements.saveImageXProfileBtn?.addEventListener('click', () => saveImage(elements.xProfilePlot, 'x_profile.png'));
+        elements.exportCSVXProfileBtn?.addEventListener('click', exportCSVFiles);
+        elements.saveImageYProfileBtn?.addEventListener('click', () => saveImage(elements.yProfilePlot, 'y_profile.png'));
+        elements.exportCSVYProfileBtn?.addEventListener('click', exportCSVFiles);
+        elements.exportCSVBtn?.addEventListener('click', exportCSVFiles);
+        elements.qEnergyLossCheckbox?.addEventListener('change', handleQEnergyLossChange);
         elements.flipUdBtn.addEventListener('click', () => sendTransformRequest('flip_ud'));
         elements.flipLrBtn.addEventListener('click', () => sendTransformRequest('flip_lr'));
         elements.rotateCcw90Btn.addEventListener('click', () => sendTransformRequest('rotate_ccw90'));
@@ -313,34 +292,28 @@ export function initializeFileUploadHandler() {
         elements.resetBtn.addEventListener('click', () => sendTransformRequest('reset'));
     }
 
-
     async function sendTransformRequest(action) {
-        console.log("sendTransformRequest 호출됨, action:", action);
-        console.log("qConversionPerformed 상태:", qConversionPerformed);
-        console.log("lastUploadedData 상태:", lastUploadedData);
+        console.log("sendTransformRequest called, action:", action);
+        console.log("qConversionPerformed state:", qConversionPerformed);
+        console.log("lastUploadedData state:", lastUploadedData);
     
-        // Q-Energy Loss가 수행된 경우, 변환된 explist_q_converted를 사용
-        const explistToUse = qConversionPerformed 
-            ? lastUploadedData.explist_q_converted 
-            : lastUploadedData.explist_shifted_gauss;
+        // Use the most recent transformed data
+        const explistToUse = lastUploadedData.explist_q_converted || lastUploadedData.explist_shifted_gauss;
     
-        console.log("선택된 explist:", explistToUse);
+        console.log("Selected explist:", explistToUse);
     
-        // 필요한 데이터가 모두 있는지 확인
         if (!explistToUse || !action || !lastUploadedData.exptitles) {
-            console.error('필수 데이터가 누락되었습니다.');
+            console.error('Required data is missing.');
             updateUploadMessage('Required data missing for transformation.');
             return;
         }
     
-        // 전송할 데이터를 구성
         const dataToSend = {
             action: action,
             explist: explistToUse,
             exptitles: lastUploadedData.exptitles,
         };
     
-        // FormData에 data.json으로 추가
         const formData = new FormData();
         formData.append('data.json', new Blob([JSON.stringify(dataToSend)], { type: 'application/json' }));
     
@@ -351,57 +324,28 @@ export function initializeFileUploadHandler() {
             });
     
             if (!response.ok) {
-                throw new Error(`서버 오류 ${response.status}: ${response.statusText}`);
+                throw new Error(`Server error ${response.status}: ${response.statusText}`);
             }
     
             const result = await response.json();
             if (result.success) {
-                updatePreviewImage(result.image);
-                // 변환된 explist 경로를 업데이트
-                if (qConversionPerformed) {
-                    lastUploadedData.explist_q_converted = result.explist_path;
-                } else {
-                    lastUploadedData.explist_shifted_gauss = result.explist_path;
-                }
+                console.log('Received transformed image.');
+    
+                updatePreviewImage(result.image, 'bytesio'); // 'bytesio' indicates that this is Base64 encoded data
+                
+                // Update the session data with the new transformed explist path
+                lastUploadedData.explist_q_converted = result.explist_path;
             } else {
-                console.error("변환 실패:", result.error);
+                console.error("Transformation failed:", result.error);
                 updateUploadMessage(`Transformation failed: ${result.error}`);
             }
         } catch (error) {
-            console.error("sendTransformRequest에서 오류 발생:", error);
+            console.error("Error in sendTransformRequest:", error);
             updateUploadMessage(`Error during transformation: ${error.message}`);
         }
     }
     
-    
-
-    function loadImage() {
-        console.log('loadImage called.');
-        if (elements.viewAllBtn.classList.contains('active') && elements.previewTab.classList.contains('active')) {
-            if (lastUploadedData) {
-                console.log('Last uploaded data found, updating preview image.');
-                togglePlotVisibility();
-            } else {
-                console.log('No last uploaded data found, triggering file input change.');
-                elements.fileInput.dispatchEvent(new Event('change'));
-            }
-        }
-    }
-
-    function handleReset() {
-        if (!initialUploadedData) {
-            console.warn('No data available to reset.');
-            updateUploadMessage('No data available to reset');
-            return;
-        }
-
-        lastUploadedData = JSON.parse(JSON.stringify(initialUploadedData));
-        qConversionPerformed = false; 
-        updateProfilePlots(lastUploadedData.profiles);
-        togglePlotVisibility();
-        updateUploadMessage('Reset to initial state.');
-    }
-
+        
     async function exportCSVFiles() {
         console.log('exportCSVFiles called.');
         if (!lastUploadedData) {
@@ -452,12 +396,26 @@ export function initializeFileUploadHandler() {
 
     function saveImage(imageElement, fileName) {
         console.log(`Saving image: ${fileName}`);
-        
+
         if (imageElement.src.startsWith('data:image')) {
-            // base64 data
+            // Base64 data case
+            const base64Data = imageElement.src.split(',')[1];
+            const byteCharacters = atob(base64Data);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'image/jpeg' });
+
+            const url = URL.createObjectURL(blob);
+            downloadImage(url, fileName);
+            URL.revokeObjectURL(url);
+        } else if (imageElement.src.startsWith('blob:')) {
+            // BytesIO case (Blob URL)
             downloadImage(imageElement.src, fileName);
         } else {
-            // URL image
+            // URL case
             fetch(imageElement.src)
                 .then(response => response.blob())
                 .then(blob => {
@@ -467,17 +425,44 @@ export function initializeFileUploadHandler() {
                 })
                 .catch(error => console.error('Error downloading image:', error));
         }
-    }
+}
     
     function downloadImage(url, fileName) {
         const link = document.createElement('a');
         link.href = url;
-        link.download = fileName;  // 이 파일명으로 다운로드
+        link.download = fileName;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     }
     
+    function loadImage() {
+        console.log('loadImage called.');
+        if (elements.viewAllBtn.classList.contains('active') && elements.previewTab.classList.contains('active')) {
+            if (lastUploadedData) {
+                console.log('Last uploaded data found, updating preview image.');
+                togglePlotVisibility();
+            } else {
+                console.log('No last uploaded data found, triggering file input change.');
+                elements.fileInput.dispatchEvent(new Event('change'));
+            }
+        }
+    }
+
+    function handleReset() {
+        if (!initialUploadedData) {
+            console.warn('No data available to reset.');
+            updateUploadMessage('No data available to reset');
+            return;
+        }
+
+        lastUploadedData = JSON.parse(JSON.stringify(initialUploadedData));
+        qConversionPerformed = false; 
+        updateProfilePlots(lastUploadedData.profiles);
+        togglePlotVisibility();
+        updateUploadMessage('Reset to initial state.');
+    }
+
     initializeEventListeners();
 
     return {

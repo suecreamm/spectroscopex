@@ -10,7 +10,7 @@
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "ejs": "^3.1.10",
-    "electron": "^31.3.0",
+    "electron": "^31.4.0",
     "electron-builder": "^24.13.3",
     "electron-updater": "^6.2.1",
     "express": "^4.19.2"
