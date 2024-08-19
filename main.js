@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, session } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
@@ -6,10 +6,11 @@ const axios = require('axios');
 const SERVER_URL = 'http://localhost:7654';
 let isSelectingDirectory = false;
 
+
 function createWindow() {
     const privateSession = session.fromPartition('persist:private', {
         cache: false,
-        storage: false
+        storage: true
     });
 
     const win = new BrowserWindow({
@@ -85,11 +86,20 @@ ipcMain.handle('transform-image', async (event, action) => {
     try {
         const response = await axios.post(`${SERVER_URL}/transform`, { action });
         console.log('Backend response:', response.data);
-        
-        if (response.data && response.data.success && response.data.image) {
+
+        if (response.data && response.data.success) {
+            const base64Image = response.data.image;
+
+            let mimeType = 'image/png';
+
+            if (base64Image.length > 1024 || base64Image.startsWith('/9j/')) {
+                mimeType = 'image/jpeg';
+            }
+
             return {
                 success: true,
-                image: response.data.image
+                image: `data:${mimeType};base64,${base64Image}`,
+                explistPath: response.data.explist_path
             };
         } else {
             throw new Error(response.data.error || 'Unknown error occurred');
@@ -102,6 +112,7 @@ ipcMain.handle('transform-image', async (event, action) => {
         };
     }
 });
+
 
 ipcMain.handle('export-csv', async (event, data, suggestedFileName) => {
     try {

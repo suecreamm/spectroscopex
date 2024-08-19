@@ -1,7 +1,6 @@
 import os
 import logging
 import traceback
-import logging
 from flask import Blueprint, request, jsonify, session, send_file, make_response
 from werkzeug.utils import secure_filename
 from file_processor import get_sorted_files, load_and_store_data
@@ -13,9 +12,12 @@ import json
 import pickle
 from utils import save_image, save_dataframe_to_file, load_dataframe_from_file
 import pandas as pd
+import base64
+import matplotlib.pyplot as plt
 
 main_bp = Blueprint('main', __name__)
 
+plt.switch_backend('Agg')
 
 def save_file_to_directory(file, directory, filename):
     save_dir = os.path.abspath(directory)
@@ -46,7 +48,6 @@ def upload_directory():
             logging.error("파일이 요청에 포함되지 않음")
             return jsonify({"error": "파일이 요청에 포함되지 않음"}), 400
         
-        # 파일을 읽고 처리
         files = request.files.getlist('filePaths')
         file_paths = []
         for file in files:
@@ -67,7 +68,6 @@ def upload_directory():
         session['exptitles'] = exptitles
         session['gauss_peak_y_mean'] = gauss_peak_y_mean
 
-        # 프로파일 생성
         x_profile_data = generate_profile_data(explist_shifted_gauss, exptitles, profile_axis='x')
         y_profile_data = generate_profile_data(explist_shifted_gauss, exptitles, profile_axis='y')
 
@@ -105,7 +105,7 @@ def q_energy_loss():
         data_file = request.files['data.json']
         logging.debug(f"Received data.json file: {data_file.filename}, size: {data_file.content_length} bytes")
         
-        data_file.seek(0)  # 파일 포인터 초기화
+        data_file.seek(0)
         data = json.load(data_file)
         logging.debug(f"Loaded data from data.json: {data}")
 
@@ -126,7 +126,7 @@ def q_energy_loss():
             logging.error(f"파일 {explist_path}을 로드하지 못함")
             return jsonify({'error': f'Failed to load explist data from {explist_path}'}), 500
 
-        q_plot_bytes, transformed_explist = plot_data_with_q_conversion(explist_data, exptitles, gauss_peak_y_mean)
+        q_plot_bytes, transformed_explist = plot_data_with_q_conversion(explist_data, exptitles, gauss_peak_y_mean, q_conversion=True)
         q_plot_url = save_image(q_plot_bytes.getvalue(), 'q_output_plot.png')
 
         transformed_explist_path = save_dataframe_to_file(transformed_explist, 'explist_q_converted.pkl')
@@ -151,42 +151,55 @@ def q_energy_loss():
 def transform():
     try:
         if 'data.json' not in request.files:
-            logging.error("data.json 파일이 요청에 포함되지 않음")
-            return jsonify({'error': 'data.json 파일이 요청에 포함되지 않음'}), 400
+            logging.error("data.json file is not included in the request")
+            return jsonify({'error': 'data.json file is not included in the request'}), 400
+        
+        logging.debug("Transform function called.")
 
         data_file = request.files['data.json']
-        logging.debug(f"Received data.json file: {data_file.filename}, size: {data_file.content_length} bytes")
-        
-        data_file.seek(0)  # 파일 포인터 초기화
+        data_file.seek(0)
         data = json.load(data_file)
-        logging.debug(f"Loaded data from data.json: {data}")
 
         explist_path = data.get('explist')
         action = data.get('action')
 
         if not explist_path or not action:
-            logging.error("Transformation을 위한 필수 데이터가 누락됨")
+            logging.error("Missing essential data for transformation")
             return jsonify({'error': 'Missing data for transformation'}), 400
 
-        logging.debug(f"로드된 데이터: explist_path={explist_path}, action={action}")
+        logging.debug(f"Loaded data: explist_path={explist_path}, action={action}")
 
-        # explist를 파일에서 로드
+        # Generate a unique filename using UUID
+        unique_id = uuid.uuid4()
+        transformed_filename = f'transformed_explist_{action}_{unique_id}.pkl'
+        transformed_explist_path = os.path.join(os.path.dirname(explist_path), transformed_filename)
+
+        # Load explist data from the original file
         explist_data = load_dataframe_from_file(explist_path)
         if explist_data is None:
-            logging.error(f"파일 {explist_path}을 로드하지 못함")
+            logging.error(f"Failed to load file from {explist_path}")
             return jsonify({'error': f'Failed to load explist data from {explist_path}'}), 500
 
-        logging.debug(f"로드된 Explist 데이터: {explist_data}")
+        logging.debug(f"Loaded Explist data: {explist_data}")
 
+        # Perform the transformation based on the action
         transformed_explist = transform_data(explist_data, action)
         
-        img_bytes, _ = plot_data_with_q_conversion(transformed_explist, data.get('exptitles', []), apply_log=False, q_conversion=False)
-        plot_image_url = save_image(img_bytes.getvalue(), 'transformed_plot.png')
+        # Save the transformed explist to the generated file path
+        save_dataframe_to_file(transformed_explist, transformed_explist_path)
+        logging.info(f"Transformed data saved to: {transformed_explist_path}")
 
-        transformed_explist_path = save_dataframe_to_file(transformed_explist, 'transformed_explist.pkl')
+        # Generate the image and save it to a BytesIO object
+        img_bytes, explist_result = plot_data_with_q_conversion(transformed_explist, data.get('exptitles', []), apply_log=False, q_conversion=False)
+        
+        # Convert BytesIO image data to Base64
+        img_bytes.seek(0)
+        img_base64 = base64.b64encode(img_bytes.getvalue()).decode('utf-8')
+
+        # Store the path of the transformed explist in the session
         session['explist_path'] = transformed_explist_path
 
-        return jsonify({'success': True, 'image': plot_image_url, 'explist_path': transformed_explist_path})
+        return jsonify({'success': True, 'image': img_base64, 'explist_path': transformed_explist_path})
 
     except Exception as e:
         logging.error(f"Error in transform: {str(e)}")
@@ -209,7 +222,6 @@ def export_csv():
         if explist is None:
             return jsonify({'error': f'Failed to load explist data from {explist_path}'}), 500
 
-        # Prepare CSV data from the explist
         csv_data = explist.to_csv(index=False)
 
         # Send the CSV file as a response

@@ -8,6 +8,7 @@ from io import BytesIO
 import logging
 import pickle
 import logging
+import time
 
 plt.switch_backend('Agg')
 
@@ -78,11 +79,13 @@ def create_plot(explist, exptitles, save2D=True, num_xticks=5, num_yticks=5, num
         cbar_ax = fig.add_axes([0.92, 0.063, 0.02, 0.15])
         fig.colorbar(im, cax=cbar_ax, orientation='vertical')
 
+    plt.tight_layout()
     img_bytes = BytesIO()
 
     try:
-        plt.savefig(img_bytes, format='png', bbox_inches='tight')
-        #img_bytes.seek(0)
+        plt.savefig(img_bytes, format='png', bbox_inches='tight', dpi=300)
+        img_bytes.seek(0)
+        plt.close(fig)
         logging.debug("Image saved successfully.")
     except Exception as e:
         logging.error(f"Error saving image: {str(e)}")
@@ -257,10 +260,9 @@ def shift_and_preview(explist, exptitles, plot=True):
     gauss_peak_x_mean, _ = plot_x_profiles(explist, exptitles, method='mean', col_nums=4)
     gauss_peak_y_mean, _ = plot_y_profiles(explist, exptitles, method='mean', col_nums=4)
 
-    # 원점 이동된 데이터프레임 생성
     explist_shifted_gauss = origin_dataframes(explist.copy(), gauss_peak_x_mean, gauss_peak_y_mean, exptitles, save=True, filename="gauss_shifted")
 
-    # explist_shifted_gauss, exptitles, gauss_peak_x, gauss_peak_y를 함께 저장
+    # Save explist_shifted_gauss, exptitles, gauss_peak_x, gauss_peak_y
     data_to_save = {
         "explist_shifted_gauss": explist_shifted_gauss,
         "exptitles": exptitles,
@@ -294,7 +296,7 @@ def angle_to_q(angle, E0, E_loss):
 
     return q  # Å^-1로 변환
 
-def process_q_values(q_values, debugging=True):
+def process_q_values(q_values, debugging=False):
     valid_q = q_values[~np.isnan(q_values) & ~np.isinf(q_values)]
 
     if debugging:
@@ -343,61 +345,64 @@ def plot_data_with_q_conversion(explist, exptitles, gauss_y=None, num_cols=2,
                                 cbar_pos=[0.92, 0.063, 0.02, 0.15], cmap='inferno',
                                 font_family='sans-serif', font_style='normal', font_weight='normal',
                                 num_ticks_x=5, num_ticks_y=5, tick_fontsize=14,
-                                apply_log=True, original_explist=None, q_conversion=True):
-    import matplotlib
-    matplotlib.use('Agg')
+                                apply_log=True, original_explist=None, q_conversion=False, x_label=None,
+                                show_colorbar=True, hide_y_axis_labels=False):
 
-    print(f"Received E0 values: {gauss_y}")
-    print(f"Q-Energy Loss Enabled: {q_conversion and (q_min is not None or q_max is not None) and gauss_y is not None}")
-
-    # Set font properties
     font_prop = fm.FontProperties(family=font_family, style=font_style, weight=font_weight)
+
+    def filter_dataframe_by_range(df, q_min, q_max, E_min, E_max):
+        columns_as_float = df.columns.astype(float)
+        index_as_float = df.index.astype(float)
+        filtered_df = df.loc[(index_as_float >= E_min) & (index_as_float <= E_max), 
+                             (columns_as_float >= q_min) & (columns_as_float <= q_max)]
+        return filtered_df
 
     num_subplots = len(explist)
     num_rows = (num_subplots + num_cols - 1) // num_cols
 
     fig_width, fig_height = figsize
     fig, axs = plt.subplots(num_rows, num_cols, figsize=(fig_width*num_cols, fig_height*num_rows))
+    
+    # Adjust space between plots
+    plt.subplots_adjust(hspace=0.4, wspace=0.4)
+
     if num_subplots > 1:
         axs = axs.flatten()
     else:
         axs = [axs]
 
-    plt.subplots_adjust(hspace=0.05, wspace=0.05)
+
+    #plt.subplots_adjust(hspace=0.05, wspace=0.05)
 
     converted_explist = [] if q_conversion and gauss_y is not None else None
+    print(f"Converted explist initialized: {converted_explist is not None}")
 
     for i, (df, title) in enumerate(zip(explist, exptitles)):
-        print(f"Processing subplot {i+1}/{num_subplots} for '{title}'")
+
+        if q_min is not None and q_max is not None and E_min is not None and E_max is not None:
+            df = filter_dataframe_by_range(df, q_min, q_max, E_min, E_max)
 
         Z = df.values
         if Z.size == 0:
-            print(f"Warning: Data for {title} is empty.")
             continue
 
         if apply_log and np.issubdtype(Z.dtype, np.number):
             Z = np.log1p(Z)
-            if np.isnan(Z).any():
-                print(f"Warning: NaN values found in log-transformed data for {title}.")
 
-        angles = df.columns.astype(float) * np.pi / 180  # Convert angles to radians
-        energy_losses = df.index.astype(float)  # Energy Loss in eV
+        angles = df.columns.astype(float) * np.pi / 180
+        energy_losses = df.index.astype(float)
 
         if q_conversion and gauss_y is not None:
             E0 = gauss_y[i]
-            if E0 is None or E0 <= 0:
-                raise ValueError(f"Invalid E0 value: {E0} for experiment {title}")
-
             q_values = np.array([angle_to_q(angle, E0, 0) for angle in angles])
             processed_q_values = process_q_values(q_values)
-            # 변환된 explist를 저장
+
             converted_df = pd.DataFrame(Z, index=energy_losses, columns=processed_q_values)
             converted_explist.append(converted_df)
         else:
-            processed_q_values = df.columns.astype(float)  # Use angles as x-axis without q conversion
+            processed_q_values = df.columns.astype(float)
 
         if original_explist is not None:
-            print(f"Using original Y-axis values for {title}")
             energy_losses = original_explist[i].index.astype(float)
 
         q_min_plot = q_min if q_min is not None else np.nanmin(processed_q_values)
@@ -405,24 +410,23 @@ def plot_data_with_q_conversion(explist, exptitles, gauss_y=None, num_cols=2,
         E_min_plot = E_min if E_min is not None else np.nanmin(energy_losses)
         E_max_plot = E_max if E_max is not None else np.nanmax(energy_losses)
 
-        if np.isnan(q_min_plot) or np.isinf(q_min_plot):
-            q_min_plot = 0
-        if np.isnan(q_max_plot) or np.isinf(q_max_plot):
-            q_max_plot = 1
-        if np.isnan(E_min_plot) or np.isinf(E_min_plot):
-            E_min_plot = 0
-        if np.isnan(E_max_plot) or np.isinf(E_max_plot):
-            E_max_plot = 1
-
         extent = [q_min_plot, q_max_plot, E_min_plot, E_max_plot]
-        print(f"Plotting with extent: {extent}")
 
         ax = axs[i]
         im = ax.imshow(Z, aspect='auto', origin='lower', extent=extent, cmap=cmap)
 
         ax.set_title(f"{title}, E0 = {E0:.6f} eV" if q_conversion and gauss_y is not None else title, fontsize=title_fontsize, fontproperties=font_prop)
-        ax.set_xlabel('q (Å⁻¹)' if q_conversion and gauss_y is not None else 'Angle (degree)', fontsize=label_fontsize, fontproperties=font_prop)
+        
+        if x_label is not None:
+            ax.set_xlabel(x_label, fontsize=label_fontsize, fontproperties=font_prop)
+        else:
+            ax.set_xlabel('q (Å⁻¹)' if q_conversion and gauss_y is not None else 'Angle (degree)', fontsize=label_fontsize, fontproperties=font_prop)
+
         ax.set_ylabel('Energy Loss (eV)', fontsize=label_fontsize, fontproperties=font_prop)
+
+        if hide_y_axis_labels and i % num_cols != 0:
+            ax.set_yticklabels([])
+            ax.set_ylabel("")
 
         for label in ax.get_xticklabels() + ax.get_yticklabels():
             label.set_fontproperties(font_prop)
@@ -432,19 +436,27 @@ def plot_data_with_q_conversion(explist, exptitles, gauss_y=None, num_cols=2,
     for j in range(num_subplots, len(axs)):
         fig.delaxes(axs[j])
 
-    cbar_ax = fig.add_axes(cbar_pos)
-    cbar = fig.colorbar(im, cax=cbar_ax, orientation='vertical')
-    cbar.ax.tick_params(labelsize=label_fontsize)
-    for label in cbar.ax.get_yticklabels():
-        label.set_fontproperties(font_prop)
+    if show_colorbar and im is not None:
+        cbar_ax = fig.add_axes(cbar_pos)
+        cbar = fig.colorbar(im, cax=cbar_ax, orientation='vertical')
+        cbar.ax.tick_params(labelsize=label_fontsize)
+        for label in cbar.ax.get_yticklabels():
+            label.set_fontproperties(font_prop)
+        print("Colorbar added to the plot.")
+
+
+    logging.debug(f"Data for plotting: {explist}")
+    plt.tight_layout()
 
     img_bytes = BytesIO()
     try:
         plt.savefig(img_bytes, format='png', bbox_inches='tight')
-        #img_bytes.seek(0)
+        img_bytes.seek(0)
+        plt.close(fig)
         print(f"Info: Image saved successfully, size: {img_bytes.getbuffer().nbytes} bytes.")
     except Exception as e:
         print(f"Error: Failed to save image: {str(e)}")
         raise
 
     return img_bytes, converted_explist if q_conversion and gauss_y is not None else None
+

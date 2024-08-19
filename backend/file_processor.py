@@ -4,6 +4,8 @@ import pandas as pd
 import numpy as np
 import uuid
 import logging
+import pickle
+
 
 def get_sorted_files(file_paths):
     sorted_files = sorted(file_paths, key=extract_number_from_filename)
@@ -25,13 +27,6 @@ def ensure_numeric_index_and_columns(df):
     df = df.dropna(axis=0, how='any').dropna(axis=1, how='any')
     
     return df
-
-
-import os
-import pandas as pd
-import logging
-import re
-import pickle
 
 def load_and_store_data(file_paths, add_str='', add_str2=' K'):
     explist = []
