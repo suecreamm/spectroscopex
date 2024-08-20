@@ -45,8 +45,8 @@ def upload_directory():
     SAVED_DATA_DIR = 'saved_data'
     try:
         if 'filePaths' not in request.files:
-            logging.error("파일이 요청에 포함되지 않음")
-            return jsonify({"error": "파일이 요청에 포함되지 않음"}), 400
+            logging.error("No files included in the request")
+            return jsonify({"error": "No files included in the request"}), 400
         
         files = request.files.getlist('filePaths')
         file_paths = []
@@ -59,14 +59,19 @@ def upload_directory():
         explist, exptitles = load_and_store_data(sorted_file_paths)
 
         # Shift and preview processing
-        gauss_peak_x_mean, gauss_peak_y_mean, explist_shifted_gauss, img_bytes = shift_and_preview(explist, exptitles, plot=True)
+        gauss_peak_x_mean, gauss_peak_y_mean, explist_shifted_gauss, _ = shift_and_preview(explist, exptitles, plot=False)
+
+        explist_shifted_gauss = transform_data(explist_shifted_gauss,'flip_lr')
+        explist_shifted_gauss = transform_data(explist_shifted_gauss,'flip_ud')
+
+        img_bytes, _ = plot_data_with_q_conversion(explist_shifted_gauss,exptitles, gauss_peak_y_mean, q_conversion=False, apply_log=True)
         img_url = save_image(img_bytes.getvalue(), 'output_plot.png')
 
-        # Save explist_shifted_gauss as a file and store path in session
         explist_path = save_dataframe_to_file(explist_shifted_gauss, 'explist_shifted_gauss.pkl')
         session['explist_path'] = explist_path
         session['exptitles'] = exptitles
         session['gauss_peak_y_mean'] = gauss_peak_y_mean
+        session['latest_explist'] = explist_path  # Store the latest explist path
 
         x_profile_data = generate_profile_data(explist_shifted_gauss, exptitles, profile_axis='x')
         y_profile_data = generate_profile_data(explist_shifted_gauss, exptitles, profile_axis='y')
@@ -81,6 +86,7 @@ def upload_directory():
             'filePaths': file_paths,
             'explist_shifted_gauss': explist_path,
             'exptitles': exptitles,
+            'latest_explist': explist_path,  # Return the latest explist path
             'profiles': {
                 'x_profile': {'image': x_profile_url},
                 'y_profile': {'image': y_profile_url}
@@ -99,8 +105,8 @@ def upload_directory():
 def q_energy_loss():
     try:
         if 'data.json' not in request.files:
-            logging.error("data.json 파일이 요청에 포함되지 않음")
-            return jsonify({'error': 'data.json 파일이 요청에 포함되지 않음'}), 400
+            logging.error("data.json file is not included in the request")
+            return jsonify({'error': 'data.json file is not included in the request'}), 400
 
         data_file = request.files['data.json']
         logging.debug(f"Received data.json file: {data_file.filename}, size: {data_file.content_length} bytes")
@@ -109,40 +115,42 @@ def q_energy_loss():
         data = json.load(data_file)
         logging.debug(f"Loaded data from data.json: {data}")
 
-        # explist_shifted_gauss.pkl 파일 경로를 data.json에서 가져옴
-        explist_path = data.get('explist_shifted_gauss')
+        # Get the explist_shifted_gauss file path from data.json
+        explist_path = data.get('latest_explist')
         exptitles = data.get('exptitles', [])
         gauss_peak_y_mean = data.get('gauss_peak_y_mean', None)
 
-        logging.debug(f"로드된 데이터: explist_path={explist_path}, exptitles={exptitles}, gauss_peak_y_mean={gauss_peak_y_mean}")
+        logging.debug(f"Loaded data: explist_path={explist_path}, exptitles={exptitles}, gauss_peak_y_mean={gauss_peak_y_mean}")
 
         if not explist_path or not exptitles or gauss_peak_y_mean is None:
-            logging.error("Q-Energy Loss 변환을 위한 데이터가 누락됨")
+            logging.error("Missing data for Q-Energy Loss transformation")
             return jsonify({'error': 'Missing data for Q-Energy Loss transformation'}), 400
 
         explist_data = load_dataframe_from_file(explist_path)
 
         if explist_data is None:
-            logging.error(f"파일 {explist_path}을 로드하지 못함")
+            logging.error(f"Failed to load file from {explist_path}")
             return jsonify({'error': f'Failed to load explist data from {explist_path}'}), 500
 
-        q_plot_bytes, transformed_explist = plot_data_with_q_conversion(explist_data, exptitles, gauss_peak_y_mean, q_conversion=True)
+        q_plot_bytes, transformed_explist = plot_data_with_q_conversion(explist_data, exptitles, gauss_peak_y_mean, q_conversion=True, apply_log=True)
         q_plot_url = save_image(q_plot_bytes.getvalue(), 'q_output_plot.png')
 
         transformed_explist_path = save_dataframe_to_file(transformed_explist, 'explist_q_converted.pkl')
         session['explist_path'] = transformed_explist_path
+        session['latest_explist'] = transformed_explist_path  # Store the latest explist path
 
         response_data = {
             'success': True,
             'q_plot': q_plot_url,
             'explist_q_converted': transformed_explist_path,
+            'latest_explist': transformed_explist_path,
             'exptitles': exptitles
         }
 
         return jsonify(response_data)
 
     except Exception as e:
-        logging.error(f"q_energy_loss에서 오류 발생: {str(e)}")
+        logging.error(f"Error in q_energy_loss: {str(e)}")
         logging.error(traceback.format_exc())
         return jsonify({'error': f'Server error: {str(e)}', 'traceback': traceback.format_exc()}), 500
 
@@ -160,7 +168,7 @@ def transform():
         data_file.seek(0)
         data = json.load(data_file)
 
-        explist_path = data.get('explist')
+        explist_path = data.get('explist')  # Use latest_explist from the incoming request
         action = data.get('action')
 
         if not explist_path or not action:
@@ -182,14 +190,11 @@ def transform():
 
         logging.debug(f"Loaded Explist data: {explist_data}")
 
-        # Perform the transformation based on the action
         transformed_explist = transform_data(explist_data, action)
         
-        # Save the transformed explist to the generated file path
         save_dataframe_to_file(transformed_explist, transformed_explist_path)
         logging.info(f"Transformed data saved to: {transformed_explist_path}")
 
-        # Generate the image and save it to a BytesIO object
         img_bytes, explist_result = plot_data_with_q_conversion(transformed_explist, data.get('exptitles', []), apply_log=False, q_conversion=False)
         
         # Convert BytesIO image data to Base64
@@ -198,8 +203,9 @@ def transform():
 
         # Store the path of the transformed explist in the session
         session['explist_path'] = transformed_explist_path
+        session['latest_explist'] = transformed_explist_path  # Store the latest explist path
 
-        return jsonify({'success': True, 'image': img_base64, 'explist_path': transformed_explist_path})
+        return jsonify({'success': True, 'image': img_base64, 'explist_path': transformed_explist_path, 'latest_explist': transformed_explist_path})
 
     except Exception as e:
         logging.error(f"Error in transform: {str(e)}")
@@ -222,7 +228,7 @@ def export_csv():
         if explist is None:
             return jsonify({'error': f'Failed to load explist data from {explist_path}'}), 500
 
-        csv_data = explist.to_csv(index=False)
+        csv_data = explist.to_csv(index=True)
 
         # Send the CSV file as a response
         response = make_response(csv_data)
