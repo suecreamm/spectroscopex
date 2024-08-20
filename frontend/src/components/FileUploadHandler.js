@@ -13,6 +13,8 @@ export function initializeFileUploadHandler() {
         saveImageYProfileBtn: document.getElementById('saveImageYProfileBtn'),
         exportCSVXProfileBtn: document.getElementById('exportCSVXProfileBtn'),
         exportCSVYProfileBtn: document.getElementById('exportCSVYProfileBtn'),
+        exportCSVBtn: document.getElementById('exportCSVBtn'),
+        savePreviewBtn: document.getElementById('savePreviewBtn'),
         blurBtn: document.getElementById('blurBtn'),
         sharpenBtn: document.getElementById('sharpenBtn'),
         exportCSVBtn: document.getElementById('exportCSVBtn'),
@@ -281,8 +283,12 @@ export function initializeFileUploadHandler() {
         elements.exportCSVXProfileBtn?.addEventListener('click', exportCSVFiles);
         elements.saveImageYProfileBtn?.addEventListener('click', () => saveImage(elements.yProfilePlot, 'y_profile.png'));
         elements.exportCSVYProfileBtn?.addEventListener('click', exportCSVFiles);
-        elements.exportCSVBtn?.addEventListener('click', exportCSVFiles);
+        
+        elements.saveImageXProfileBtn?.addEventListener('click', () => saveImage(elements.xProfilePlot, 'x_profile.png'));
+        elements.saveImageYProfileBtn?.addEventListener('click', () => saveImage(elements.yProfilePlot, 'y_profile.png'));
+    
         elements.qEnergyLossCheckbox?.addEventListener('change', handleQEnergyLossChange);
+        
         elements.flipUdBtn.addEventListener('click', () => sendTransformRequest('flip_ud'));
         elements.flipLrBtn.addEventListener('click', () => sendTransformRequest('flip_lr'));
         elements.rotateCcw90Btn.addEventListener('click', () => sendTransformRequest('rotate_ccw90'));
@@ -396,9 +402,13 @@ export function initializeFileUploadHandler() {
 
     function saveImage(imageElement, fileName) {
         console.log(`Saving image: ${fileName}`);
-
+    
+        if (!imageElement || !imageElement.src) {
+            console.error('No image available to save.');
+            return;
+        }
+    
         if (imageElement.src.startsWith('data:image')) {
-            // Base64 data case
             const base64Data = imageElement.src.split(',')[1];
             const byteCharacters = atob(base64Data);
             const byteNumbers = new Array(byteCharacters.length);
@@ -406,26 +416,16 @@ export function initializeFileUploadHandler() {
                 byteNumbers[i] = byteCharacters.charCodeAt(i);
             }
             const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray], { type: 'image/jpeg' });
-
+            const blob = new Blob([byteArray], { type: 'image/png' });
+    
             const url = URL.createObjectURL(blob);
             downloadImage(url, fileName);
             URL.revokeObjectURL(url);
-        } else if (imageElement.src.startsWith('blob:')) {
-            // BytesIO case (Blob URL)
-            downloadImage(imageElement.src, fileName);
         } else {
-            // URL case
-            fetch(imageElement.src)
-                .then(response => response.blob())
-                .then(blob => {
-                    const url = URL.createObjectURL(blob);
-                    downloadImage(url, fileName);
-                    URL.revokeObjectURL(url);
-                })
-                .catch(error => console.error('Error downloading image:', error));
+            downloadImage(imageElement.src, fileName);
         }
-}
+    }
+    
     
     function downloadImage(url, fileName) {
         const link = document.createElement('a');
