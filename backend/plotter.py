@@ -346,7 +346,7 @@ def plot_data_with_q_conversion(explist, exptitles, gauss_y=None, num_cols=2,
                                 font_family='sans-serif', font_style='normal', font_weight='normal',
                                 num_ticks_x=5, num_ticks_y=5, tick_fontsize=14,
                                 apply_log=True, original_explist=None, q_conversion=False, x_label=None,
-                                show_colorbar=True, hide_y_axis_labels=False):
+                                show_colorbar=True, hide_y_axis_labels=True):
 
     font_prop = fm.FontProperties(family=font_family, style=font_style, weight=font_weight)
 
