@@ -14,6 +14,8 @@ from utils import save_image, save_dataframe_to_file, load_dataframe_from_file
 import pandas as pd
 import base64
 import matplotlib.pyplot as plt
+from io import BytesIO
+import zipfile
 
 main_bp = Blueprint('main', __name__)
 
@@ -195,7 +197,7 @@ def transform():
         save_dataframe_to_file(transformed_explist, transformed_explist_path)
         logging.info(f"Transformed data saved to: {transformed_explist_path}")
 
-        img_bytes, explist_result = plot_data_with_q_conversion(transformed_explist, data.get('exptitles', []), apply_log=False, q_conversion=False)
+        img_bytes, _ = plot_data_with_q_conversion(transformed_explist, data.get('exptitles', []), apply_log=False, q_conversion=False)
         
         # Convert BytesIO image data to Base64
         img_bytes.seek(0)
@@ -213,8 +215,8 @@ def transform():
         return jsonify({'error': f'Server error: {str(e)}', 'traceback': traceback.format_exc()}), 500
 
 
-@main_bp.route('/export-csv', methods=['POST'])
-def export_csv():
+@main_bp.route('/export-csv-zip', methods=['POST'])
+def export_csv_zip():
     try:
         data = request.json
         explist_path = data.get('explist')
@@ -223,22 +225,30 @@ def export_csv():
         if not explist_path or not exptitles:
             return jsonify({'error': 'Missing explist or exptitles'}), 400
 
-        # Load the explist data
-        explist = load_dataframe_from_file(explist_path)
-        if explist is None:
+        # Load the explist data from a pickle file
+        try:
+            with open(explist_path, 'rb') as f:
+                explist = pickle.load(f)
+        except Exception as e:
+            logging.error(f"Failed to load explist data from {explist_path}: {str(e)}")
             return jsonify({'error': f'Failed to load explist data from {explist_path}'}), 500
 
-        csv_data = explist.to_csv(index=True)
+        if explist is None:
+            return jsonify({'error': f'Explist data is empty or corrupted in {explist_path}'}), 500
 
-        # Send the CSV file as a response
-        response = make_response(csv_data)
-        response.headers['Content-Disposition'] = 'attachment; filename=exported_data.csv'
-        response.headers['Content-Type'] = 'text/csv'
+        # Create a ZIP file in memory
+        memory_file = BytesIO()
+        with zipfile.ZipFile(memory_file, 'w') as zf:
+            for i, title in enumerate(exptitles):
+                # Assuming 'explist' is a DataFrame or similar structure
+                csv_data = explist.to_csv(index=True)
+                file_name = f'exported_{title}.csv'
+                zf.writestr(file_name, csv_data)
         
-        return response
+        memory_file.seek(0)
+        return send_file(memory_file, attachment_filename='exported_data.zip', as_attachment=True)
 
     except Exception as e:
-        logging.error(f"Error in export_csv: {str(e)}")
+        logging.error(f"Error in export_csv_zip: {str(e)}")
         logging.error(traceback.format_exc())
         return jsonify({'error': f'Server error: {str(e)}', 'traceback': traceback.format_exc()}), 500
-

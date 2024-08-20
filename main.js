@@ -18,9 +18,9 @@ function createWindow() {
         height: 750,
         webPreferences: {
             preload: path.join(__dirname, 'frontend', 'preload.js'),
-            session: privateSession, // Private mode in Chrome
+            session: privateSession,
             nodeIntegration: true,
-            contextIsolation: false
+            contextIsolation: true
         },
     });
   
@@ -92,7 +92,7 @@ ipcMain.handle('transform-image', async (event, action) => {
 
             let mimeType = 'image/png';
 
-            if (base64Image.length > 1024 || base64Image.startsWith('/9j/')) {
+            if (base64Image.startsWith('/9j/')) {
                 mimeType = 'image/jpeg';
             }
 
@@ -129,7 +129,8 @@ ipcMain.handle('export-csv', async (event, data, suggestedFileName) => {
             return { success: false, message: 'Export canceled' };
         }
 
-        fs.writeFileSync(result.filePath, data, 'utf-8');
+        // 비동기 파일 쓰기 (fs.promises 사용)
+        await fs.promises.writeFile(result.filePath, data, 'utf-8');
         console.log('CSV exported successfully to:', result.filePath);
         return { success: true, filePath: result.filePath };
     } catch (error) {
