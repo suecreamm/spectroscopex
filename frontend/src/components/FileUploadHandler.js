@@ -463,7 +463,7 @@ export function initializeFileUploadHandler() {
         } else {
             downloadImage(imageElement.src, fileName);
         }
-    }    
+    }
     
     function downloadImage(url, fileName) {
         const link = document.createElement('a');
