@@ -214,6 +214,7 @@ export function initializeFileUploadHandler() {
 
     function updateProfilePlots(profiles) {
         console.log('Updating profile plots.');
+    
         if (!profiles) {
             console.error('Profiles data is undefined or null.');
             return;
@@ -224,20 +225,41 @@ export function initializeFileUploadHandler() {
             return;
         }
     
-        updateProfilePlot(profiles.x_profile, elements.xProfilePlot, 'saveImageXProfileBtn');
-        updateProfilePlot(profiles.y_profile, elements.yProfilePlot, 'saveImageYProfileBtn');
+        updateProfilePlot(profiles.x_profile, document.getElementById('x_profile_plot'), 'saveImageXProfileBtn');
+        updateProfilePlot(profiles.y_profile, document.getElementById('y_profile_plot'), 'saveImageYProfileBtn');
     }
-
-    function updateProfilePlot(profileData, plotElement, saveBtnId) {
+    
+    function updateProfilePlot(profileData, plotElement, saveBtnId, dataType = 'url') {
         if (profileData && profileData.image) {
             console.log(`Updating profile plot: ${saveBtnId}`);
-            updatePreviewImage(profileData.image, 'url');
+    
+            let imageUrl;
+            
+            if (dataType === 'url') {
+                const baseUrl = 'http://localhost:7654';
+                imageUrl = baseUrl + profileData.image + '?t=' + new Date().getTime();
+    
+            } else if (dataType === 'base64') {
+                imageUrl = 'data:image/png;base64,' + profileData.image;
+    
+            } else if (dataType === 'bytesio') {
+                const blob = new Blob([profileData.image], { type: 'image/png' });
+                imageUrl = URL.createObjectURL(blob);
+    
+            } else {
+                console.error('Unsupported data type for image.');
+                return;
+            }
+    
+            plotElement.src = imageUrl;
             plotElement.style.display = "block";
             document.getElementById(saveBtnId).style.display = 'inline-block';
+    
         } else {
             console.warn(`No profile data available for: ${saveBtnId}`);
         }
     }
+    
 
     function updatePreviewImage(imageData, dataType = 'url') {
         const imgElement = document.getElementById('previewImage');
@@ -366,48 +388,57 @@ export function initializeFileUploadHandler() {
             updateUploadMessage('No data available to export as CSV');
             return;
         }
-
-        const saveDir = await window.electron.selectSaveDirectory();
-
-        if (!saveDir) {
+    
+        if (!savedDirectoryPath) {
+            console.log('No saved directory path found. Asking user to select one.');
+            savedDirectoryPath = await window.electron.selectSaveDirectory();
+        }
+    
+        if (!savedDirectoryPath) {
             updateUploadMessage('No save directory selected');
             return;
         }
-
-        const dataToSend = isQEnergyLossEnabled ? lastUploadedData.explist_q_converted : lastUploadedData.explist_shifted_gauss;
+    
+        const dataToSend = lastUploadedData.latest_explist;
         console.log('Data to send:', dataToSend);
-
+    
+        if (!dataToSend) {
+            updateUploadMessage('No latest explist data available to export.');
+            return;
+        }
+    
         try {
-            const response = await fetch('http://localhost:7654/download-shifted-data', {
+            const response = await fetch('http://localhost:7654/export-csv-zip', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    save_dir: saveDir,
                     explist: dataToSend,
                     exptitles: lastUploadedData.exptitles
-                }),
-                mode: 'cors',
+                })
             });
-
+    
             if (!response.ok) {
                 throw new Error(`Server error ${response.status}: ${response.statusText}`);
             }
-
-            const data = await response.json();
-            const fileUrls = data.file_urls;
-
-            if (fileUrls && fileUrls.length > 0) {
-                fileUrls.forEach(fileUrl => downloadImage(fileUrl, ''));
-                updateUploadMessage('CSV files exported successfully.');
-            } else {
-                updateUploadMessage('No CSV files available to export.');
-            }
+    
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'exported_data.zip';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+    
+            updateUploadMessage('CSV files exported and downloaded successfully as a ZIP file.');
         } catch (error) {
             updateUploadMessage(`Failed to export CSV files: ${error.message}`);
             console.error('Error exporting CSV files:', error);
         }
-    }
+    }   
 
+    
     function saveImage(imageElement, fileName) {
         console.log(`Saving image: ${fileName}`);
     
@@ -432,8 +463,7 @@ export function initializeFileUploadHandler() {
         } else {
             downloadImage(imageElement.src, fileName);
         }
-    }    
-    
+    }
     
     function downloadImage(url, fileName) {
         const link = document.createElement('a');
@@ -456,6 +486,7 @@ export function initializeFileUploadHandler() {
             }
         }
     }
+
 
     function handleReset() {
         if (!initialUploadedData) {
