@@ -284,9 +284,17 @@ export function initializeFileUploadHandler() {
         elements.saveImageYProfileBtn?.addEventListener('click', () => saveImage(elements.yProfilePlot, 'y_profile.png'));
         elements.exportCSVYProfileBtn?.addEventListener('click', exportCSVFiles);
         
-        elements.saveImageXProfileBtn?.addEventListener('click', () => saveImage(elements.xProfilePlot, 'x_profile.png'));
-        elements.saveImageYProfileBtn?.addEventListener('click', () => saveImage(elements.yProfilePlot, 'y_profile.png'));
-    
+        elements.savePreviewBtn.addEventListener('click', () => {
+            if (elements.previewImage) {
+                console.log('Save Preview button clicked. Attempting to save the preview image.');
+                saveImage(elements.previewImage, 'preview_image.png');
+            } else {
+                console.error('Preview image not available for saving.');
+            }
+        });
+
+        elements.exportCSVBtn?.addEventListener('click', exportCSVFiles);
+
         elements.qEnergyLossCheckbox?.addEventListener('change', handleQEnergyLossChange);
         
         elements.flipUdBtn.addEventListener('click', () => sendTransformRequest('flip_ud'));
@@ -424,7 +432,7 @@ export function initializeFileUploadHandler() {
         } else {
             downloadImage(imageElement.src, fileName);
         }
-    }
+    }    
     
     
     function downloadImage(url, fileName) {
