@@ -1,4 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog, session } = require('electron');
+const { autoUpdater } = require('electron-updater');
+const log = require('electron-log');
 const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
@@ -28,6 +30,11 @@ function createWindow() {
     if (process.env.NODE_ENV === 'development') {
         win.webContents.openDevTools();
     }
+    autoUpdater.logger = log;
+    autoUpdater.logger.transports.file.level = 'info';
+    log.info('App starting...');
+
+    autoUpdater.checkForUpdatesAndNotify();
 }
 
 app.whenReady().then(createWindow);
@@ -150,4 +157,13 @@ app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
         createWindow();
     }
+});
+
+autoUpdater.on('update-available', () => {
+    log.info('Update available.');
+});
+
+autoUpdater.on('update-downloaded', () => {
+    log.info('Update downloaded.');
+    autoUpdater.quitAndInstall();
 });
