@@ -29,7 +29,7 @@
                         <ul>
 				<li><a href="#upload" class="active">Upload</a></li>
 				<li><a href="#analysis">Analysis</a></li>
-				<li><a href="#supports">Supports</a></li>
+				<li><a href="#about">About This Project</a></li>
 			</ul>
                     </li>
                 </ul>
@@ -111,6 +111,9 @@
                                                 <div class="subtab-action-button" id="sharpenBtn">
                                                     <img src="assets/icons/sharpen.svg" alt="Sharpen" />
                                                 </div>
+                                                <div class="subtab-action-button" id="commandBtn">
+                                                    <img src="assets/icons/command.svg" alt="Command" />
+                                                </div>
                                                 <div class="subtab-action-button" id="resetBtn">
                                                     <img src="assets/icons/reset.svg" alt="Reset" />
                                                 </div>
@@ -136,8 +139,13 @@
 
                                         <div class="tabPanel" id="x_profile">
                                             <div class="subtab-action-buttons">
-                                                <div class="subtab-action-button" id="meanBtnX"><i class="fa-solid fa-chart-bar"></i> Mean</div>
+                                                <div class="subtab-action-button active" id="meanBtnX"><i class="fa-solid fa-chart-bar"></i> Mean</div>
                                                 <div class="subtab-action-button" id="medianBtnX"><i class="fa-solid fa-balance-scale"></i> Median</div>
+                                            </div>
+                                            <div class="subtab-action-buttons">
+                                                <div class="subtab-action-button" id="commandXBtn">
+                                                    <img src="assets/icons/command.svg" alt="command button" />
+                                                </div>
                                             </div>
                                             <div class="image-container">
                                                 <img id="x_profile_plot" alt="X-Profile Plot" style="display:none;">
@@ -153,8 +161,13 @@
                                         </div>
                                         <div class="tabPanel" id="y_profile">
                                             <div class="subtab-action-buttons">
-                                                <div class="subtab-action-button" id="meanBtnY"><i class="fa-solid fa-chart-bar"></i> Mean</div>
+                                                <div class="subtab-action-button active" id="meanBtnY"><i class="fa-solid fa-chart-bar"></i> Mean</div>
                                                 <div class="subtab-action-button" id="medianBtnY"><i class="fa-solid fa-balance-scale"></i> Median</div>
+                                            </div>
+                                            <div class="subtab-action-buttons">
+                                                <div class="subtab-action-button" id="commandYBtn">
+                                                    <img src="assets/icons/command.svg" alt="command button" />
+                                                </div>
                                             </div>
                                             <div class="image-container">
                                                 <img id="y_profile_plot" alt="Y-Profile Plot" style="display:none;">
@@ -176,15 +189,15 @@
 							</section>
 
                         <!-- Introduction -->
-                            <section id="supports" class="main special">
+                            <section id="about" class="main special">
                                 <div class="spotlight">
                                     <div class="content">
                                         <header class="major">
-                                            <h2>Supports</h2>
+                                            <h2>About This Project</h2>
                                         </header>
-                                        <p> Sed lorem ipsum dolor sit amet nullam consequat feugiat consequat magna
-                                        adipiscing magna etiam amet veroeros. Lorem ipsum dolor tempus sit cursus.
-                                        Tempus nisl et nullam lorem ipsum dolor sit amet aliquam.</p>
+                                        <p> This project was developed to simplify the analysis of Electron Energy Loss Spectroscopy (EELS) data, a task that can be both complex and time-consuming. As a Physics PhD student, I encountered these challenges firsthand, which inspired the creation of this tool. The goal is to make EELS data analysis faster and more accessible, allowing researchers to focus more on their scientific discoveries rather than the intricacies of data processing.
+
+                                        </p>
                                         <ul class="actions">
                                             <li><a href="generic.html" class="button">Learn More</a></li>
                                         </ul>
@@ -197,15 +210,17 @@
 
         <footer id="footer">
             <section>
-                <h2>Aliquam sed mauris</h2>
-                <p>Sed lorem ipsum dolor sit amet et nullam consequat feugiat consequat magna adipiscing tempus etiam dolore veroeros. eget dapibus mauris. Cras aliquet, nisl ut viverra sollicitudin, ligula erat egestas velit, vitae tincidunt odio.</p>
+                <h2>Support Us</h2>
+                <p>
+                    Your support helps us continue to provide this tool for free to researchers around the world. Whether it's through spreading the word, contributing code, or offering financial support, every bit helps us improve and expand this project. Join us in making SpectroscopeX more accessible and efficient for everyone.
+                </p>
                 <ul class="actions">
                     <li><a href="" class="button">Learn More</a></li>
                 </ul>
             </section>
 
             <section>
-                <h2>Etiam feugiat</h2>
+                <h2>Get in Touch</h2>
                 <dl class="alt">
                     <dt>Address</dt>
                     <dd>Busan &bull; Korea</dd>

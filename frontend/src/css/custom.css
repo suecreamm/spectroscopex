@@ -69,7 +69,6 @@ button {
 
 .upload-btn {
   color: white;
-  /*  background-color: #FFD700; */
   padding: 2px 2px;
   font-size: 24px;
   font-weight: bold;
@@ -134,7 +133,7 @@ h1, h2, h3, h4, h5, h6, .title, .btn, .button {
   cursor: pointer;
   border-radius: 4px;
   transition: background-color 0.3s;
-  margin: 5px;
+  margin: 3px;
 }
 
 .tab-action-button i, .subtab-action-button i {
@@ -162,25 +161,29 @@ h1, h2, h3, h4, h5, h6, .title, .btn, .button {
   transition: background-color 0.3s ease, transform 0.3s ease, color 0.3s ease;
 }
 
-#flipUdBtn, #flipLrBtn, #rotateCcw90Btn, #rotateCw90Btn, #blurBtn, #sharpenBtn {
+#flipUdBtn, #flipLrBtn, #rotateCcw90Btn, #rotateCw90Btn, #blurBtn, #sharpenBtn,
+#commandBtn, #commandXBtn, #commandYBtn {
   width: 36px;
   height: 36px;
   transition: background-color 0.3s ease, transform 0.3s ease, color 0.3s ease;
 }
 
-#flipUdBtn img, #flipLrBtn img, #rotateCcw90Btn img, #rotateCw90Btn img, #blurBtn img, #sharpenBtn img {
+#flipUdBtn img, #flipLrBtn img, #rotateCcw90Btn img, #rotateCw90Btn img, #blurBtn img, #sharpenBtn img,
+#commandBtn img, #commandXBtn img, #commandYBtn img {
   width: 20px;
   height: 20px;
   transform: scale(1.2);
 }
 
 #flipUdBtn:hover, #flipLrBtn:hover, #rotateCcw90Btn:hover, #rotateCw90Btn:hover,
-#blurBtn:hover, #sharpenBtn:hover  {
+#blurBtn:hover, #sharpenBtn:hover,
+#commandBtn:hover, #commandXBtn:hover, #commandYBtn:hover {
   background-color: #555;
 }
 
 #flipUdBtn:hover img, #flipLrBtn:hover img, #rotateCcw90Btn:hover img, #rotateCw90Btn:hover img,
-#resetBtn:hover img, #blurBtn:hover img, #sharpenBtn:hover img {
+#resetBtn:hover img, #blurBtn:hover img, #sharpenBtn:hover img,
+#commandBtn:hover img, #commandXBtn:hover img, #commandYBtn:hover img {
   filter: invert(1) brightness(2);
 }
 
