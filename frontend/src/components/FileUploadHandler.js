@@ -1,3 +1,5 @@
+import { showModalMessage } from '../../assets/js/modalMessage.js';
+
 export function initializeFileUploadHandler() {
     const elements = {
         fileInput: document.getElementById('fileInput'),
@@ -193,7 +195,6 @@ export function initializeFileUploadHandler() {
             }
     
             const data = await response.json();
-            console.log('Files uploaded successfully.');
             lastUploadedData = data;
     
             updateProfilePlots(data.profiles);
@@ -205,7 +206,7 @@ export function initializeFileUploadHandler() {
                 togglePlotVisibility();
             }
     
-            updateUploadMessage('Files uploaded and processed successfully.');
+            showModalMessage('Files uploaded and processed successfully.');
         } catch (error) {
             console.error('Failed to upload and process the file:', error);
             updateUploadMessage(`Failed to upload and process the file: ${error.message}`);

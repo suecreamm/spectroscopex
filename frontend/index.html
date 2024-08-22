@@ -112,7 +112,7 @@
                                                     <img src="assets/icons/sharpen.svg" alt="Sharpen" />
                                                 </div>
                                                 <div class="subtab-action-button" id="commandBtn">
-                                                    <img src="assets/icons/command.svg" alt="Command" />
+                                                    <img src="assets/icons/command.svg" data-modal="command.html" data-target-modal="commandModal" alt="command button" />
                                                 </div>
                                                 <div class="subtab-action-button" id="resetBtn">
                                                     <img src="assets/icons/reset.svg" alt="Reset" />
@@ -144,7 +144,7 @@
                                             </div>
                                             <div class="subtab-action-buttons">
                                                 <div class="subtab-action-button" id="commandXBtn">
-                                                    <img src="assets/icons/command.svg" alt="command button" />
+                                                    <img src="assets/icons/command.svg" data-modal="command.html" data-target-modal="commandModal" alt="command button" />
                                                 </div>
                                             </div>
                                             <div class="image-container">
@@ -166,7 +166,7 @@
                                             </div>
                                             <div class="subtab-action-buttons">
                                                 <div class="subtab-action-button" id="commandYBtn">
-                                                    <img src="assets/icons/command.svg" alt="command button" />
+                                                    <img src="assets/icons/command.svg" data-modal="command.html" data-target-modal="commandModal" alt="command button" />
                                                 </div>
                                             </div>
                                             <div class="image-container">
@@ -199,7 +199,7 @@
 
                                         </p>
                                         <ul class="actions">
-                                            <li><a href="generic.html" class="button">Learn More</a></li>
+                                            <li><a href=# data-modal="about.html" data-target-modal="aboutModal" class="button">Learn More</a></li>
                                         </ul>
                                     </div>
                                     <span class="image"><img src="images/pic01.jpg" alt="" /></span>
@@ -215,7 +215,7 @@
                     Your support helps us continue to provide this tool for free to researchers around the world. Whether it's through spreading the word, contributing code, or offering financial support, every bit helps us improve and expand this project. Join us in making SpectroscopeX more accessible and efficient for everyone.
                 </p>
                 <ul class="actions">
-                    <li><a href="" class="button">Learn More</a></li>
+                    <li><a href="#" data-modal="support.html" data-target-modal="supportModal" class="button">Learn More</a></li>
                 </ul>
             </section>
 
@@ -236,15 +236,8 @@
                 </ul>    
             </section>
            
-            <p class="copyright"> &copy; Suecremm. All rights reserved. <a href="#" id="licenseLink" data-modal="license.html">License</a></p>
+            <p class="copyright"> &copy; Suecremm. All rights reserved. <a href="#" data-modal="license.html">License</a></p>
         </footer>
-    </div>
-
-    <!-- License Modal -->
-    <div id="licenseModal" class="modal">
-        <div id="modalBodyContent" class="modal-content">
-            <!-- license.html의 내용이 여기에 동적으로 로드됩니다. -->
-        </div>
     </div>
 
     <!-- Scripts -->
@@ -257,5 +250,6 @@
         <script src="assets/js/main.js"></script>
         <script type="module" src="src/js/index.js"></script>
         <script src="assets/js/modal.js"></script>
+        <script type="module" src="assets/js/modalMessage.js"></script>
     </body>
 </html>
