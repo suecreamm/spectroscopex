@@ -345,6 +345,46 @@ h1, h2, h3, h4, h5, h6, .title, .btn, .button {
   cursor: pointer;
 }
 
+/* Command Form Style */
+#optionsInput {
+  background-color: #333;
+  color: #c79cc8;
+  border: 1px solid #c79cc8;
+  border-radius: 5px;
+  padding: 10px;
+  font-family: 'Consolas', Consolas, monospace; /* for terminal look */
+  font-size: 14px;
+  resize: vertical;
+  margin: 5px;
+}
+
+#plotOptionsForm label {
+  color: #555;
+  font-family: 'Consolas', Consolas, monospace;
+}
+
+#optionsInput::placeholder {
+  color: #c79cc8;
+  opacity: 0.5;
+}
+
+/* Form Submit Button */
+#plotOptionsForm button {
+  background-color: #c79cc8;
+  color: #333;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-family: 'Montserrat', sans-serif; /* Keep the consistent font style */
+}
+
+#plotOptionsForm button:hover {
+  background-color: #b36aa8; /* Slightly darker on hover */
+}
+
+
 /* Media Queries for Responsiveness */
 @media screen and (max-width: 768px) {
   .tab {

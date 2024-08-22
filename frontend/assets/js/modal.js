@@ -1,33 +1,54 @@
-// Function to load content into the modal
-function loadModalContent(contentUrl) {
+const modals = [
+    { modalId: 'licenseModal', contentFile: 'license.html' },
+    { modalId: 'aboutModal', contentFile: 'about.html' },
+    { modalId: 'supportModal', contentFile: 'support.html' },
+    { modalId: 'commandModal', contentFile: 'command.html' },
+];
+
+modals.forEach(({ modalId, contentFile }) => {
+    const modalTemplate = `
+        <div id="${modalId}" class="modal">
+            <div class="modal-content">
+                <!-- ${contentFile} -->
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalTemplate);
+});
+
+
+function loadModalContent(modalId, contentUrl) {
     fetch(contentUrl)
     .then(response => response.text())
     .then(data => {
-        // license.html의 내용을 modalBodyContent에 삽입
-        let modalContent = document.getElementById("modalBodyContent");
+        let modalContent = document.querySelector(`#${modalId} .modal-content`);
         if (modalContent) {
             modalContent.innerHTML = data;
         }
 
-        // 모달을 표시
-        let modal = document.getElementById("licenseModal");
+        let modal = document.getElementById(modalId);
         if (modal) {
             modal.style.display = "block";
 
-            // 닫기 버튼 이벤트 설정
+            // Close event for the close button
             var closeButton = modal.querySelector(".close");
             if (closeButton) {
                 closeButton.onclick = function() {
                     modal.style.display = "none";
+                    window.removeEventListener('click', outsideClickListener);
                 };
             }
 
-            // 모달 외부를 클릭했을 때 모달 닫기
-            window.onclick = function(event) {
+            // Function to close modal when clicking outside of it
+            function outsideClickListener(event) {
                 if (event.target == modal) {
                     modal.style.display = "none";
+                    window.removeEventListener('click', outsideClickListener);
                 }
-            };
+            }
+
+            // Add the event listener to detect clicks outside the modal
+            window.addEventListener('click', outsideClickListener);
         }
     })
     .catch(error => {
@@ -35,11 +56,12 @@ function loadModalContent(contentUrl) {
     });
 }
 
-// 모든 data-modal 속성을 가진 요소에 이벤트 리스너를 설정
+// Attach event listeners to elements with the [data-modal] attribute
 document.querySelectorAll("[data-modal]").forEach(function(element) {
     element.addEventListener("click", function(event) {
         event.preventDefault();
         const contentUrl = element.getAttribute("data-modal");
-        loadModalContent(contentUrl);
+        const modalId = element.getAttribute("data-target-modal") || "licenseModal";
+        loadModalContent(modalId, contentUrl);
     });
 });
