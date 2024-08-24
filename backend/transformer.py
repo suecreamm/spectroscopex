@@ -6,6 +6,7 @@ from flask import url_for
 import uuid
 from utils import save_image 
 import logging
+from cv2 import GaussianBlur
 
 
 def flip_ud(df, change_sign=True):
@@ -32,6 +33,20 @@ def rotate_90(df, direction='ccw', change_sign=True):
             rotated_df.columns = -rotated_df.columns
     return rotated_df
 
+def blur(df, blur_strength=3.5):
+    logging.debug(f"blur 함수 실행 중. 블러 강도: {blur_strength}.")
+    sigma = blur_strength
+    kernel_size = int(6 * sigma + 1)
+    if kernel_size % 2 == 0:
+        kernel_size += 1  # kerner_size must be odd.
+
+    image = df.values.astype(np.float32)
+    blurred = GaussianBlur(image, (kernel_size, kernel_size), sigma)
+    logging.debug("Gaussian blur applied.")
+    blurred_df = pd.DataFrame(blurred, index=df.index, columns=df.columns)
+    return blurred_df
+
+
 def transform_data(explist, action):
     from transformer import flip_ud, flip_lr, rotate_90
     transformed_explist = []
@@ -45,6 +60,10 @@ def transform_data(explist, action):
             transformed_explist.append(rotate_90(df, 'ccw'))
         elif action == 'rotate_cw90':
             transformed_explist.append(rotate_90(df, 'cw'))
+        elif action == 'blur':
+            transformed_explist.append(blur(df))
+        elif action == 'sharpen':
+            pass
         else:
             logging.error(f"Unknown transformation action: {action}")
             raise ValueError(f"Unknown transformation action: {action}")
