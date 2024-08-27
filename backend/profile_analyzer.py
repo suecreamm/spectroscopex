@@ -43,7 +43,12 @@ def fit_and_plot_profiles(explist, exptitles, method='mean', col_nums=2, profile
     fwhm_func = fwhm_gaussian if fit_function == 'gauss' else fwhm_lorentzian
 
     fig, axes = plt.subplots(row_nums, col_nums, figsize=(16, row_nums * 5))
-    axes = axes.flatten() if num_dfs > 1 else [axes]
+    
+    # Flatten axes array only if it's an ndarray
+    if isinstance(axes, np.ndarray):
+        axes = axes.flatten()
+    else:
+        axes = [axes]  # If it's not an array, ensure it's a list
 
     peak_positions = []
     fwhm_values = []
@@ -133,6 +138,7 @@ def fit_and_plot_profiles(explist, exptitles, method='mean', col_nums=2, profile
         ax.set_yticks(y_ticks)
         ax.tick_params(axis='y', labelsize=16)
 
+    # Remove unused axes if any
     for j in range(i + 1, len(axes)):
         fig.delaxes(axes[j])
 
@@ -144,6 +150,7 @@ def fit_and_plot_profiles(explist, exptitles, method='mean', col_nums=2, profile
     img_bytes.seek(0)
 
     return peak_positions, fwhm_values, img_bytes
+
 
 
 def generate_profile_data(explist, exptitles, profile_axis, method='mean'):
