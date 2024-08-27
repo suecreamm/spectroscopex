@@ -366,19 +366,16 @@ def plot_data_with_q_conversion(explist, exptitles, gauss_y=None, num_cols=2,
     # Adjust space between plots
     plt.subplots_adjust(hspace=0.4, wspace=0.4)
 
-    if num_subplots > 1:
+    # Flatten axs only if it's an ndarray
+    if isinstance(axs, np.ndarray):
         axs = axs.flatten()
     else:
-        axs = [axs]
-
-
-    #plt.subplots_adjust(hspace=0.05, wspace=0.05)
+        axs = [axs]  # If it's not an array, ensure it's a list
 
     converted_explist = [] if q_conversion and gauss_y is not None else None
     print(f"Converted explist initialized: {converted_explist is not None}")
 
     for i, (df, title) in enumerate(zip(explist, exptitles)):
-
         if q_min is not None and q_max is not None and E_min is not None and E_max is not None:
             df = filter_dataframe_by_range(df, q_min, q_max, E_min, E_max)
 
@@ -412,7 +409,7 @@ def plot_data_with_q_conversion(explist, exptitles, gauss_y=None, num_cols=2,
 
         extent = [q_min_plot, q_max_plot, E_min_plot, E_max_plot]
 
-        ax = axs[i]
+        ax = axs[i]  # retrieve the correct Axes object
         im = ax.imshow(Z, aspect='auto', origin='lower', extent=extent, cmap=cmap)
 
         ax.set_title(f"{title}, E0 = {E0:.6f} eV" if q_conversion and gauss_y is not None else title, fontsize=title_fontsize, fontproperties=font_prop)
@@ -433,7 +430,8 @@ def plot_data_with_q_conversion(explist, exptitles, gauss_y=None, num_cols=2,
 
         ax.tick_params(axis='both', which='major', labelsize=tick_fontsize)
 
-    for j in range(num_subplots, len(axs)):
+    # Remove any unused axes
+    for j in range(len(explist), len(axs)):
         fig.delaxes(axs[j])
 
     if show_colorbar and im is not None:
@@ -443,7 +441,6 @@ def plot_data_with_q_conversion(explist, exptitles, gauss_y=None, num_cols=2,
         for label in cbar.ax.get_yticklabels():
             label.set_fontproperties(font_prop)
         print("Colorbar added to the plot.")
-
 
     logging.debug(f"Data for plotting: {explist}")
     plt.tight_layout()
@@ -459,4 +456,8 @@ def plot_data_with_q_conversion(explist, exptitles, gauss_y=None, num_cols=2,
         raise
 
     return img_bytes, converted_explist if q_conversion and gauss_y is not None else None
+
+
+
+
 

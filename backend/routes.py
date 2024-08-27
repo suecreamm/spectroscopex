@@ -51,6 +51,12 @@ def upload_directory():
             return jsonify({"error": "No files included in the request"}), 400
         
         files = request.files.getlist('filePaths')
+
+        if len(files) == 1:
+            files = [files[0]]
+        
+        logging.debug(f"Files received: {[file.filename for file in files]}")
+
         file_paths = []
         for file in files:
             filename = secure_filename(file.filename)
