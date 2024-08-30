@@ -69,24 +69,39 @@ def upload_directory():
         # Shift and preview processing
         gauss_peak_x_mean, gauss_peak_y_mean, explist_shifted_gauss, _ = shift_and_preview(explist, exptitles, plot=False)
 
-        explist_shifted_gauss = transform_data(explist_shifted_gauss,'flip_lr')
-        explist_shifted_gauss = transform_data(explist_shifted_gauss,'flip_ud')
+        # If the shifted data is invalid or empty, use the original explist
+        if not explist_shifted_gauss or all(df.empty for df in explist_shifted_gauss):
+            logging.warning("No valid shifted data available. Using original explist.")
+            explist_shifted_gauss = explist  # Use the original data if the shifted data is not valid
+            skip_transformations = True
+        else:
+            skip_transformations = False
 
-        img_bytes, _ = plot_data_with_q_conversion(explist_shifted_gauss,exptitles, gauss_peak_y_mean, q_conversion=False, apply_log=True)
+        # Apply transformations to the data only if explist_shifted_gauss is valid
+        if not skip_transformations:
+            explist_shifted_gauss = transform_data(explist_shifted_gauss, 'flip_lr')
+            explist_shifted_gauss = transform_data(explist_shifted_gauss, 'flip_ud')
+
+        # Generate the plot
+        img_bytes, _ = plot_data_with_q_conversion(explist_shifted_gauss, exptitles, gauss_peak_y_mean, q_conversion=False, apply_log=True)
         img_url = save_image(img_bytes.getvalue(), 'output_plot.png')
 
+        # Save the transformed explist data
         explist_path = save_dataframe_to_file(explist_shifted_gauss, 'explist_shifted_gauss.pkl')
         session['explist_path'] = explist_path
         session['exptitles'] = exptitles
         session['gauss_peak_y_mean'] = gauss_peak_y_mean
         session['latest_explist'] = explist_path  # Store the latest explist path
 
+        # Generate profile data
         x_profile_data = generate_profile_data(explist_shifted_gauss, exptitles, profile_axis='x')
         y_profile_data = generate_profile_data(explist_shifted_gauss, exptitles, profile_axis='y')
 
+        # Save profile plots
         x_profile_url = save_image(x_profile_data['image'].getvalue(), 'x_profile_plot.png')
         y_profile_url = save_image(y_profile_data['image'].getvalue(), 'y_profile_plot.png')
 
+        # Prepare the response data
         response_data = {
             'image': img_url,
             'gauss_peak_x_mean': gauss_peak_x_mean,
@@ -100,14 +115,13 @@ def upload_directory():
                 'y_profile': {'image': y_profile_url}
             }
         }
-
         return jsonify(response_data)
 
     except Exception as e:
         logging.error(f"Error in upload_directory: {str(e)}")
         logging.error(traceback.format_exc())
         return jsonify({'error': f'Server error: {str(e)}', 'traceback': traceback.format_exc()}), 500
-        
+    
 
 @main_bp.route('/q-energyloss', methods=['POST'])
 def q_energy_loss():

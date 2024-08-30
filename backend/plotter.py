@@ -9,6 +9,7 @@ import logging
 import pickle
 import logging
 import time
+import os
 
 plt.switch_backend('Agg')
 
@@ -20,7 +21,10 @@ def lorentzian(x, a, x0, gamma):
 
 def convert_to_float(value):
     try:
-        return float(value)
+        if value is None:
+            return None
+        else:
+            return float(value)
     except ValueError:
         return value
 
@@ -95,6 +99,7 @@ def create_plot(explist, exptitles, save2D=True, num_xticks=5, num_yticks=5, num
 
     return img_bytes
 
+
 def plot_x_profiles(explist, exptitles, method='mean', col_nums=4, plot=False):
     num_dfs = len(explist)
     row_nums = math.ceil(num_dfs / col_nums)
@@ -112,39 +117,60 @@ def plot_x_profiles(explist, exptitles, method='mean', col_nums=4, plot=False):
         elif method == 'median':
             profile = df.median(axis=0)
         else:
-            raise ValueError("Method must be 'mean' or 'median'")
+            logging.warning(f"Invalid method: {method}. Skipping {title}.")
+            continue  # Skip this entry
 
         x_data = np.arange(len(profile))
         y_data = profile.values
 
-        popt_gauss, _ = curve_fit(gaussian, x_data, y_data, p0=[max(y_data), np.argmax(y_data), 1])
-        popt_lorentz, _ = curve_fit(lorentzian, x_data, y_data, p0=[max(y_data), np.argmax(y_data), 1])
+        try:
+            popt_gauss, _ = curve_fit(gaussian, x_data, y_data, p0=[max(y_data), np.argmax(y_data), 1])
+            popt_lorentz, _ = curve_fit(lorentzian, x_data, y_data, p0=[max(y_data), np.argmax(y_data), 1])
 
-        gauss_peak_x.append(profile.index[int(round(popt_gauss[1]))])
-        lorentz_peak_x.append(profile.index[int(round(popt_lorentz[1]))])
+            x_index_gauss = int(round(popt_gauss[1]))
+            x_index_lorentz = int(round(popt_lorentz[1]))
 
-        if plot:
-            ax = axes[i]
-            ax.plot(profile.index, y_data, label='Profile')
-            ax.plot(profile.index, gaussian(x_data, *popt_gauss), 'r--', label=f'Gaussian Fit: a={popt_gauss[0]:.2f}, x0={popt_gauss[1]:.2f}, sigma={popt_gauss[2]:.2f}')
-            ax.plot(profile.index, lorentzian(x_data, *popt_lorentz), 'g--', label=f'Lorentzian Fit: a={popt_lorentz[0]:.2f}, x0={popt_lorentz[1]:.2f}, gamma={popt_lorentz[2]:.2f}')
-            ax.set_title(f'{title} - X-profile')
-            ax.set_xlabel('Columns')
-            ax.set_ylabel('Values')
-            ax.legend()
+            if 0 <= x_index_gauss < len(profile.index):
+                gauss_peak_x.append(profile.index[x_index_gauss])
+            else:
+                logging.warning(f"Index {x_index_gauss} is out of bounds for Gaussian fit in {title}. Skipping.")
+                gauss_peak_x.append(None)
 
-            max_xticks = 5
-            x_ticks = np.linspace(0, len(profile.index) - 1, max_xticks, dtype=int)
-            formatted_xticks = [profile.index[j] for j in x_ticks]
-            formatted_xticklabels = [f'{x:.1f}' if isinstance(x, (int, float)) else str(x) for x in formatted_xticks]
-            ax.set_xticks(formatted_xticks)
-            ax.set_xticklabels(formatted_xticklabels, rotation=-90, ha="right")
+            if 0 <= x_index_lorentz < len(profile.index):
+                lorentz_peak_x.append(profile.index[x_index_lorentz])
+            else:
+                logging.warning(f"Index {x_index_lorentz} is out of bounds for Lorentzian fit in {title}. Skipping.")
+                lorentz_peak_x.append(None)
+
+            if plot and gauss_peak_x[-1] is not None and lorentz_peak_x[-1] is not None:
+                ax = axes[i]
+                ax.plot(profile.index, y_data, label='Profile')
+                ax.plot(profile.index, gaussian(x_data, *popt_gauss), 'r--',
+                        label=f'Gaussian Fit: a={popt_gauss[0]:.2f}, x0={popt_gauss[1]:.2f}, sigma={popt_gauss[2]:.2f}')
+                ax.plot(profile.index, lorentzian(x_data, *popt_lorentz), 'g--',
+                        label=f'Lorentzian Fit: a={popt_lorentz[0]:.2f}, x0={popt_lorentz[1]:.2f}, gamma={popt_lorentz[2]:.2f}')
+                ax.set_title(f'{title} - X-profile')
+                ax.set_xlabel('Columns')
+                ax.set_ylabel('Values')
+                ax.legend()
+
+                max_xticks = 5
+                x_ticks = np.linspace(0, len(profile.index) - 1, max_xticks, dtype=int)
+                formatted_xticks = [profile.index[j] for j in x_ticks]
+                formatted_xticklabels = [f'{x:.1f}' if isinstance(x, (int, float)) else str(x) for x in formatted_xticks]
+                ax.set_xticks(formatted_xticks)
+                ax.set_xticklabels(formatted_xticklabels, rotation=-90, ha="right")
+
+        except Exception as e:
+            logging.error(f"Error processing {title}: {str(e)}")
+            gauss_peak_x.append(None)
+            lorentz_peak_x.append(None)
 
     if plot:
         for j in range(i + 1, len(axes)):
             fig.delaxes(axes[j])
 
-        #plt.tight_layout()
+        plt.tight_layout()
         plt.show()
 
     return gauss_peak_x, lorentz_peak_x
@@ -166,28 +192,49 @@ def plot_y_profiles(explist, exptitles, method='mean', col_nums=4, plot=False):
         elif method == 'median':
             profile = df.median(axis=1)
         else:
-            raise ValueError("Method must be 'mean' or 'median'")
+            logging.warning(f"Invalid method: {method}. Skipping {title}.")
+            continue  # Skip this entry
 
         x_data = np.arange(len(profile))
         y_data = profile.values
         x_labels = profile.index
 
-        popt_gauss, _ = curve_fit(gaussian, x_data, y_data, p0=[max(y_data), np.argmax(y_data), 1])
-        popt_lorentz, _ = curve_fit(lorentzian, x_data, y_data, p0=[max(y_data), np.argmax(y_data), 1])
+        try:
+            popt_gauss, _ = curve_fit(gaussian, x_data, y_data, p0=[max(y_data), np.argmax(y_data), 1])
+            popt_lorentz, _ = curve_fit(lorentzian, x_data, y_data, p0=[max(y_data), np.argmax(y_data), 1])
 
-        gauss_peak_y.append(x_labels[int(round(popt_gauss[1]))])
-        lorentz_peak_y.append(x_labels[int(round(popt_lorentz[1]))])
+            y_index_gauss = int(round(popt_gauss[1]))
+            y_index_lorentz = int(round(popt_lorentz[1]))
 
-        if plot:
-            ax = axes[i]
-            ax.plot(x_labels, y_data, label='Profile')
-            ax.plot(x_labels, gaussian(x_data, *popt_gauss), 'r--', label=f'Gaussian Fit: a={popt_gauss[0]:.2f}, x0={popt_gauss[1]:.2f}, sigma={popt_gauss[2]:.2f}')
-            ax.plot(x_labels, lorentzian(x_data, *popt_lorentz), 'g--', label=f'Lorentzian Fit: a={popt_lorentz[0]:.2f}, x0={popt_lorentz[1]:.2f}, gamma={popt_lorentz[2]:.2f}')
-            ax.set_title(f'{title} - Y-profile')
-            ax.set_xlabel('Index')
-            ax.set_ylabel('Values')
-            ax.legend()
-            plt.setp(ax.get_xticklabels(), rotation=-90, ha="left")
+            if 0 <= y_index_gauss < len(x_labels):
+                gauss_peak_y.append(x_labels[y_index_gauss])
+            else:
+                logging.warning(f"Index {y_index_gauss} is out of bounds for Gaussian fit in {title}. Skipping.")
+                gauss_peak_y.append(None)
+
+            if 0 <= y_index_lorentz < len(x_labels):
+                lorentz_peak_y.append(x_labels[y_index_lorentz])
+            else:
+                logging.warning(f"Index {y_index_lorentz} is out of bounds for Lorentzian fit in {title}. Skipping.")
+                lorentz_peak_y.append(None)
+
+            if plot and gauss_peak_y[-1] is not None and lorentz_peak_y[-1] is not None:
+                ax = axes[i]
+                ax.plot(x_labels, y_data, label='Profile')
+                ax.plot(x_labels, gaussian(x_data, *popt_gauss), 'r--',
+                        label=f'Gaussian Fit: a={popt_gauss[0]:.2f}, x0={popt_gauss[1]:.2f}, sigma={popt_gauss[2]:.2f}')
+                ax.plot(x_labels, lorentzian(x_data, *popt_lorentz), 'g--',
+                        label=f'Lorentzian Fit: a={popt_lorentz[0]:.2f}, x0={popt_lorentz[1]:.2f}, gamma={popt_lorentz[2]:.2f}')
+                ax.set_title(f'{title} - Y-profile')
+                ax.set_xlabel('Index')
+                ax.set_ylabel('Values')
+                ax.legend()
+                plt.setp(ax.get_xticklabels(), rotation=-90, ha="left")
+
+        except Exception as e:
+            logging.error(f"Error processing {title}: {str(e)}")
+            gauss_peak_y.append(None)
+            lorentz_peak_y.append(None)
 
     if plot:
         for j in range(i + 1, len(axes)):
@@ -198,41 +245,37 @@ def plot_y_profiles(explist, exptitles, method='mean', col_nums=4, plot=False):
 
     return gauss_peak_y, lorentz_peak_y
 
-def origin_dataframes(explist, peak_x, peak_y, exptitles, save=False, filename=None):
-    import os
 
-    peak_x = [convert_to_float(x) for x in peak_x]
-    peak_y = [convert_to_float(y) for y in peak_y]
-
-    if save and filename:
-        if not os.path.exists('origin'):
-            os.makedirs('origin')
+def origin_dataframes(explist, peak_x, peak_y, exptitles, save=True, filename="shifted_data"):
+    peak_x = [convert_to_float(x) for x in peak_x if x is not None]
+    peak_y = [convert_to_float(y) for y in peak_y if y is not None]
 
     shifted_explist = []
 
     for i, df in enumerate(explist):
+        if i >= len(peak_x) or i >= len(peak_y):
+            logging.warning(f"Skipping DataFrame {i} due to missing peak_x or peak_y values.")
+            continue
+
+        if peak_x[i] is None or peak_y[i] is None:
+            logging.warning(f"Skipping DataFrame {i} due to None values in peak_x or peak_y.")
+            continue
+
         shift_df = df.copy()
 
         try:
             float_columns = df.columns.astype(float)
             new_columns = float_columns - peak_x[i]
-        except ValueError:
-            logging.error(f"Error converting columns to float for DataFrame {i}, generating evenly spaced columns.")
-            try:
-                first_col = float(df.columns[0])
-                last_col = float(df.columns[-1])
-                total_cols = df.shape[1]
-                new_columns = np.linspace(first_col - peak_x[i], last_col - peak_x[i], total_cols)
-            except ValueError:
-                logging.error(f"Could not convert columns to float, defaulting to integer range.")
-                new_columns = np.arange(df.shape[1]) - peak_x[i]
+        except Exception as e:
+            logging.error(f"Error processing columns in DataFrame {i}: {str(e)}")
+            continue
 
         try:
             float_index = df.index.astype(float)
             new_index = float_index - peak_y[i]
-        except ValueError:
-            logging.error(f"Error converting index to float for DataFrame {i}, keeping original index.")
-            new_index = df.index
+        except Exception as e:
+            logging.error(f"Error processing index in DataFrame {i}: {str(e)}")
+            continue
 
         shift_df.columns = new_columns
         shift_df.index = new_index
@@ -240,14 +283,18 @@ def origin_dataframes(explist, peak_x, peak_y, exptitles, save=False, filename=N
         shifted_explist.append(shift_df)
 
         if save and filename:
+            if not os.path.exists('origin'):
+                os.makedirs('origin')
             save_filename = f"origin/{filename}_{exptitles[i]}.csv"
             counter = 1
             while os.path.exists(save_filename):
                 save_filename = f"origin/{filename}_{exptitles[i]}_{counter:03}.csv"
                 counter += 1
             shift_df.to_csv(save_filename)
+            logging.info(f"Saved shifted DataFrame {i} to {save_filename}.")
 
     return shifted_explist
+
 
 def shift_and_preview(explist, exptitles, plot=True):
     if not explist or not exptitles:
