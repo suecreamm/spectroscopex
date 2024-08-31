@@ -70,7 +70,7 @@ def create_plot(explist, exptitles, save2D=True, num_xticks=5, num_yticks=5, num
         ax.set_title(title, fontsize=20)
 
         if i % num_cols == 0:
-            ax.set_ylabel('Energy Loss (eV)', fontsize=14)
+            ax.set_ylabel('Loss Energy (eV)', fontsize=14)
         else:
             ax.set_yticklabels([])
 
@@ -466,7 +466,7 @@ def plot_data_with_q_conversion(explist, exptitles, gauss_y=None, num_cols=2,
         else:
             ax.set_xlabel('q (Å⁻¹)' if q_conversion and gauss_y is not None else 'Angle (degree)', fontsize=label_fontsize, fontproperties=font_prop)
 
-        ax.set_ylabel('Energy Loss (eV)', fontsize=label_fontsize, fontproperties=font_prop)
+        ax.set_ylabel('Loss Energy (eV)', fontsize=label_fontsize, fontproperties=font_prop)
 
         if hide_y_axis_labels and i % num_cols != 0:
             ax.set_yticklabels([])

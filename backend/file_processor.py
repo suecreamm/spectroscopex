@@ -28,74 +28,65 @@ def ensure_numeric_index_and_columns(df):
     
     return df
 
+
 def load_and_store_data(file_paths, add_str='', add_str2=' K'):
     explist = []
     exptitles = []
 
+    file_info = []
+
     for path in file_paths:
         if not os.path.exists(path):
-            logging.error(f"파일이 존재하지 않음: {path}")
+            logging.error(f"File does not exist: {path}")
             continue
 
         if path.endswith('.csv'):
             try:
                 df = pd.read_csv(path, index_col=0)
-                logging.debug(f"{path} 파일 읽기 성공, 크기: {df.shape}")
+                logging.debug(f"Successfully read {path}, size: {df.shape}")
                 
                 df = ensure_numeric_index_and_columns(df)
-                logging.debug(f"{path} 파일 숫자형 인덱스와 컬럼으로 변환 성공")
+                logging.debug(f"Converted {path} to numeric index and columns successfully")
             except Exception as e:
-                logging.error(f"{path} 파일 읽기 오류: {e}")
+                logging.error(f"Error reading {path}: {e}")
                 continue
 
-            filename = os.path.basename(path)[:-4]  # '.csv' 확장자 제거
-            number_part = re.findall(r'\d+', filename)
-            if number_part:
-                filename = number_part[-1]  # 파일명에서 숫자 부분 추출
-            else:
-                filename = '0000'  # 숫자가 없을 경우 기본값 설정
-
-            variable_name = add_str + filename + add_str2
-            explist.append(df)
-            exptitles.append(variable_name)
-            logging.debug(f"추가된 파일: {path}, 변수명: {variable_name}")
+            file_info.append((path, df))
 
         elif path.endswith('.pkl'):
             try:
                 with open(path, 'rb') as file:
                     df = pickle.load(file)
-                logging.debug(f"{path} 파일 읽기 성공, 크기: {df.shape}")
+                logging.debug(f"Successfully read {path}, size: {df.shape}")
                 
-                # Ensure the data is in DataFrame format and process it similarly
                 if isinstance(df, pd.DataFrame):
                     df = ensure_numeric_index_and_columns(df)
-                    logging.debug(f"{path} 파일 숫자형 인덱스와 컬럼으로 변환 성공")
+                    logging.debug(f"Converted {path} to numeric index and columns successfully")
                 else:
-                    logging.error(f"{path} 파일은 데이터프레임 형식이 아님")
+                    logging.error(f"{path} is not a DataFrame format")
                     continue
             except Exception as e:
-                logging.error(f"{path} 파일 읽기 오류: {e}")
+                logging.error(f"Error reading {path}: {e}")
                 continue
 
-            filename = os.path.basename(path)[:-4]  # '.pkl' 확장자 제거
-            number_part = re.findall(r'\d+', filename)
-            if number_part:
-                filename = number_part[-1]
-            else:
-                filename = '0000'
+            file_info.append((path, df))
 
-            variable_name = add_str + filename + add_str2
-            explist.append(df)
-            exptitles.append(variable_name)
-            logging.debug(f"추가된 파일: {path}, 변수명: {variable_name}")
-        
         else:
-            logging.warning(f"지원되지 않는 파일 확장자: {path}")
+            logging.warning(f"Unsupported file extension: {path}")
+
+    file_info.sort(key=lambda x: x[0])
+
+    for idx, (path, df) in enumerate(file_info):
+        filename = f"{idx:04d}"
+        variable_name = add_str + filename + add_str2
+        explist.append(df)
+        exptitles.append(variable_name)
+        logging.debug(f"Added file: {path}, variable name: {variable_name}")
 
     if not explist or not exptitles:
-        logging.error("Explist 또는 exptitles이 비어 있음")
+        logging.error("Explist or exptitles is empty")
     else:
-        logging.info(f"총 {len(explist)}개의 데이터프레임이 로드됨.")
+        logging.info(f"Loaded a total of {len(explist)} DataFrames.")
     
     return explist, exptitles
 
@@ -112,18 +103,16 @@ def load_dataframe_from_file(file_path):
     try:
         logging.debug(f"Attempting to load file from path: {file_path}")
         
-        # 파일 확장자 확인
         _, file_extension = os.path.splitext(file_path)
         logging.debug(f"File extension detected: {file_extension}")
 
         if file_extension == '.pkl':
             logging.debug(f"Loading pkl file: {file_path}")
-            # pkl 파일을 로드하여 딕셔너리 형태로 반환
+
             with open(file_path, 'rb') as file:
                 data = pickle.load(file)
                 logging.debug(f"Successfully loaded pkl file: {file_path}")
                 
-                # pkl 파일의 데이터 구조에 대한 추가 디버깅 정보
                 if isinstance(data, dict):
                     logging.debug(f"pkl file contains a dictionary with keys: {list(data.keys())}")
                 elif isinstance(data, list):
@@ -135,7 +124,7 @@ def load_dataframe_from_file(file_path):
 
         elif file_extension == '.csv':
             logging.debug(f"Loading csv file: {file_path}")
-            # csv 파일을 로드하여 데이터프레임으로 반환
+            
             data = pd.read_csv(file_path, index_col=0)
             logging.debug(f"Successfully loaded csv file: {file_path}, shape: {data.shape}")
             return data
