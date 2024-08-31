@@ -145,8 +145,8 @@ def q_energy_loss():
         logging.debug(f"Loaded data: explist_path={explist_path}, exptitles={exptitles}, gauss_peak_y_mean={gauss_peak_y_mean}")
 
         if not explist_path or not exptitles or gauss_peak_y_mean is None:
-            logging.error("Missing data for Q-Energy Loss transformation")
-            return jsonify({'error': 'Missing data for Q-Energy Loss transformation'}), 400
+            logging.error("Missing data for Q-Loss Energy transformation")
+            return jsonify({'error': 'Missing data for Q-Loss Energy transformation'}), 400
 
         explist_data = load_dataframe_from_file(explist_path)
 
