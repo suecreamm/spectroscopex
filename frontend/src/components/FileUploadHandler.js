@@ -1,4 +1,5 @@
 import { showModalMessage } from '../../assets/js/modalMessage.js';
+import { showLoadingSpinner, hideLoadingSpinner, disableButtons, enableButtons } from '../../assets/js/uiHelpers.js';
 
 export function initializeFileUploadHandler() {
     const elements = {
@@ -38,8 +39,6 @@ export function initializeFileUploadHandler() {
         return;
     }
 
-    console.log('File upload handler initialized.');
-
     function updateUploadMessage(message) {
         if (elements.uploadMessage) {
             elements.uploadMessage.textContent = message;
@@ -51,41 +50,48 @@ export function initializeFileUploadHandler() {
     async function handleQEnergyLossChange() {
         const wasQEnergyLossEnabled = isQEnergyLossEnabled;
         isQEnergyLossEnabled = elements.qEnergyLossCheckbox.checked;
-        console.log(`q - Energy Loss enabled: ${isQEnergyLossEnabled}`);
-    
+        //console.log(`q - Energy Loss enabled: ${isQEnergyLossEnabled}`);
+        
         if (isQEnergyLossEnabled !== wasQEnergyLossEnabled) {
             qConversionPerformed = false;
         }
     
-        if (isQEnergyLossEnabled && !qConversionPerformed) {
-            try {
-                await saveSessionData(); // Save session data
-                await requestQPlot(); // Request Q-Plot
-                qConversionPerformed = true;
-            } catch (error) {
-                console.error('Error during Q-Energy Loss processing:', error);
-                updateUploadMessage(`Q-Energy Loss processing failed: ${error.message}`);
-            }
-        } else {
-            togglePlotVisibility(); // Display the original image
+        if (!lastUploadedData || !lastUploadedData.explist_shifted_gauss) {
+            console.error('No valid data available for Q-Energy Loss processing.');
+            updateUploadMessage('No data available for Q-Energy Loss processing.');
+            return;
         }
-    }    
+    
+        disableButtons();
+        showLoadingSpinner();
+    
+        try {
+            if (isQEnergyLossEnabled && !qConversionPerformed) {
+                await requestQPlot();
+                qConversionPerformed = true;
+            } else {
+                togglePlotVisibility();
+            }
+        } catch (error) {
+            console.error('Error during Q-Energy Loss processing:', error);
+            updateUploadMessage(`Q-Energy Loss processing failed: ${error.message}`);
+        } finally {
+            hideLoadingSpinner();
+            enableButtons();
+        }
+    }
     
     async function saveSessionData() {
+        if (!lastUploadedData || !lastUploadedData.explist_shifted_gauss) {
+            console.error('No valid session data to save.');
+            return;
+        }
+    
         try {
             const formData = new FormData();
+            console.log('Adding data.json to FormData');
+            formData.append('data.json', new Blob([JSON.stringify(lastUploadedData)], { type: 'application/json' }));
     
-            // Verify that the data exists correctly
-            if (lastUploadedData && lastUploadedData.explist_shifted_gauss) {
-                console.log('Adding data.json to FormData');
-                formData.append('data.json', new Blob([JSON.stringify(lastUploadedData)], { type: 'application/json' }));
-            } else {
-                console.error('lastUploadedData or explist_shifted_gauss is missing');
-                return;
-            }
-    
-            // Append q_energyloss state
-            console.log('Appending q_energyloss state');
             formData.append('q_energyloss', isQEnergyLossEnabled ? 'true' : 'false');
     
             console.log('Uploading data to server...');
@@ -106,8 +112,7 @@ export function initializeFileUploadHandler() {
         } catch (error) {
             console.error('Failed to save session data:', error);
         }
-    }
-    
+    }  
 
     async function requestQPlot() {
         if (!lastUploadedData || !lastUploadedData.explist_shifted_gauss) {
@@ -116,11 +121,12 @@ export function initializeFileUploadHandler() {
             return;
         }
     
-        console.log('Requesting Q-Plot with data:', lastUploadedData);
+        //console.log('Requesting Q-Plot with data:', lastUploadedData);
     
         try {
             const formData = new FormData();
             formData.append('data.json', new Blob([JSON.stringify(lastUploadedData)], { type: 'application/json' }));
+            formData.append('q_energyloss', 'true');
     
             const response = await fetch('http://localhost:7654/q-energyloss', {
                 method: 'POST',
@@ -132,11 +138,10 @@ export function initializeFileUploadHandler() {
             }
     
             const data = await response.json();
-            console.log('Received Q-Plot and updating image.');
+            //console.log('Received Q-Plot and updating image.');
     
             if (data.q_plot) {
-                // Assuming data.q_plot is a URL pointing to the image
-                updatePreviewImage(data.q_plot, 'url');  // 'url' indicates that this is a URL path to the image
+                updatePreviewImage(data.q_plot, 'url');
             }
     
             if (data.explist_q_converted) {
@@ -148,17 +153,16 @@ export function initializeFileUploadHandler() {
     
         } catch (error) {
             console.error('Failed to retrieve Q-Plot:', error);
+            throw error;
         }
     }
     
     
     function togglePlotVisibility() {
-        console.log('Toggling plot visibility');
+        //console.log('Toggling plot visibility');
         if (isQEnergyLossEnabled && lastUploadedData.q_plot) {
-            console.log('Displaying Q-Plot');
             updatePreviewImage(lastUploadedData.q_plot, 'bytesio');
         } else if (lastUploadedData.image) {
-            console.log('Displaying preview image');
             updatePreviewImage(lastUploadedData.image, 'url');
         } else {
             console.warn('No image data available to display');
@@ -168,21 +172,21 @@ export function initializeFileUploadHandler() {
     
 
     async function handleFileUpload(event) {
-        console.log('handleFileUpload called.');
         const files = event ? event.target.files : elements.fileInput.files;
+    
         if (files.length === 0) {
-            console.warn('No files selected.');
             updateUploadMessage('No files selected');
             return;
         }
+        
+        disableButtons();
+        showLoadingSpinner();
     
         const formData = new FormData();
-    
         for (const file of files) {
-            console.log(`Appending file: ${file.name}`);
             formData.append('filePaths', file, file.name);
         }
-    
+        
         try {
             updateUploadMessage('Uploading files...');
             const response = await fetch('http://localhost:7654/upload-directory', {
@@ -205,14 +209,17 @@ export function initializeFileUploadHandler() {
             } else {
                 togglePlotVisibility();
             }
-    
+            updateUploadMessage('Files uploaded and processed successfully.');
             showModalMessage('Files uploaded and processed successfully.');
         } catch (error) {
             console.error('Failed to upload and process the file:', error);
             updateUploadMessage(`Failed to upload and process the file: ${error.message}`);
+        } finally {
+            hideLoadingSpinner();
+            enableButtons();
         }
     }
-
+    
     function updateProfilePlots(profiles) {
         console.log('Updating profile plots.');
     
@@ -282,7 +289,6 @@ export function initializeFileUploadHandler() {
             const cacheBustedUrl = `${absoluteImageUrl}?t=${timestamp}`;
     
             imgElement.onload = () => {
-                console.log('Image loaded successfully.');
                 imgElement.style.display = 'block';
             };
     
@@ -291,13 +297,12 @@ export function initializeFileUploadHandler() {
             };
     
             imgElement.src = cacheBustedUrl;
-            console.log(`Updating preview image with URL: ${cacheBustedUrl}`);
+            //console.log(`Updating preview image with URL: ${cacheBustedUrl}`);
         }
     }
 
     
     function initializeEventListeners() {
-        console.log('Initializing event listeners.');
         elements.fileInput.addEventListener('change', handleFileUpload);
         elements.viewAllBtn.addEventListener('click', loadImage);
         elements.previewTab.addEventListener('click', loadImage);
@@ -330,55 +335,47 @@ export function initializeFileUploadHandler() {
     }
 
     async function sendTransformRequest(action) {
-        console.log("sendTransformRequest called, action:", action);
-        console.log("qConversionPerformed state:", qConversionPerformed);
-        console.log("lastUploadedData state:", lastUploadedData);
-    
-        // Use the most recent transformed data
         const explistToUse = lastUploadedData.explist_q_converted || lastUploadedData.explist_shifted_gauss;
-    
-        console.log("Selected explist:", explistToUse);
-    
+        
         if (!explistToUse || !action || !lastUploadedData.exptitles) {
-            console.error('Required data is missing.');
             updateUploadMessage('Required data missing for transformation.');
             return;
         }
-    
+        
         const dataToSend = {
             action: action,
             explist: explistToUse,
             exptitles: lastUploadedData.exptitles,
         };
-    
+        
         const formData = new FormData();
         formData.append('data.json', new Blob([JSON.stringify(dataToSend)], { type: 'application/json' }));
+        
+        disableButtons();
+        showLoadingSpinner();
     
         try {
             const response = await fetch('http://localhost:7654/transform', {
                 method: 'POST',
                 body: formData,
             });
-    
+        
             if (!response.ok) {
                 throw new Error(`Server error ${response.status}: ${response.statusText}`);
             }
-    
+        
             const result = await response.json();
             if (result.success) {
-                console.log('Received transformed image.');
-    
-                updatePreviewImage(result.image, 'bytesio'); // 'bytesio' indicates that this is Base64 encoded data
-                
-                // Update the session data with the new transformed explist path
+                updatePreviewImage(result.image, 'bytesio');
                 lastUploadedData.explist_q_converted = result.explist_path;
             } else {
-                console.error("Transformation failed:", result.error);
                 updateUploadMessage(`Transformation failed: ${result.error}`);
             }
         } catch (error) {
-            console.error("Error in sendTransformRequest:", error);
             updateUploadMessage(`Error during transformation: ${error.message}`);
+        } finally {
+            hideLoadingSpinner();
+            enableButtons();
         }
     }
     
@@ -476,10 +473,8 @@ export function initializeFileUploadHandler() {
     }
     
     function loadImage() {
-        console.log('loadImage called.');
         if (elements.viewAllBtn.classList.contains('active') && elements.previewTab.classList.contains('active')) {
             if (lastUploadedData) {
-                console.log('Last uploaded data found, updating preview image.');
                 togglePlotVisibility();
             } else {
                 console.log('No last uploaded data found, triggering file input change.');
@@ -491,17 +486,17 @@ export function initializeFileUploadHandler() {
 
     function handleReset() {
         if (!initialUploadedData) {
-            console.warn('No data available to reset.');
             updateUploadMessage('No data available to reset');
             return;
         }
-
+    
         lastUploadedData = JSON.parse(JSON.stringify(initialUploadedData));
         qConversionPerformed = false; 
         updateProfilePlots(lastUploadedData.profiles);
         togglePlotVisibility();
         updateUploadMessage('Reset to initial state.');
     }
+    
 
     initializeEventListeners();
 

@@ -142,7 +142,7 @@ def fit_and_plot_profiles(explist, exptitles, method='mean', col_nums=2, profile
     for j in range(i + 1, len(axes)):
         fig.delaxes(axes[j])
 
-    plt.tight_layout()
+    #plt.tight_layout()
     
     img_bytes = BytesIO()
     plt.savefig(img_bytes, format='png')
