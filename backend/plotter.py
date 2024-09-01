@@ -83,7 +83,7 @@ def create_plot(explist, exptitles, save2D=True, num_xticks=5, num_yticks=5, num
         cbar_ax = fig.add_axes([0.92, 0.063, 0.02, 0.15])
         fig.colorbar(im, cax=cbar_ax, orientation='vertical')
 
-    plt.tight_layout()
+    #plt.tight_layout()
     img_bytes = BytesIO()
 
     try:
@@ -170,7 +170,7 @@ def plot_x_profiles(explist, exptitles, method='mean', col_nums=4, plot=False):
         for j in range(i + 1, len(axes)):
             fig.delaxes(axes[j])
 
-        plt.tight_layout()
+        #plt.tight_layout()
         plt.show()
 
     return gauss_peak_x, lorentz_peak_x
@@ -240,7 +240,7 @@ def plot_y_profiles(explist, exptitles, method='mean', col_nums=4, plot=False):
         for j in range(i + 1, len(axes)):
             fig.delaxes(axes[j])
 
-        plt.tight_layout()
+        #plt.tight_layout()
         plt.show()
 
     return gauss_peak_y, lorentz_peak_y
@@ -490,7 +490,7 @@ def plot_data_with_q_conversion(explist, exptitles, gauss_y=None, num_cols=2,
         print("Colorbar added to the plot.")
 
     logging.debug(f"Data for plotting: {explist}")
-    plt.tight_layout()
+    #plt.tight_layout()
 
     img_bytes = BytesIO()
     try:
