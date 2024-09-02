@@ -149,6 +149,22 @@
                                                 <div class="subtab-action-button" id="commandXBtn">
                                                     <img src="assets/icons/command.svg" data-modal="command.html" data-target-modal="commandModal" alt="command button" />
                                                 </div>
+                                                <div class="subtab-action-button" id="intensityXBtn">
+                                                    <img src="assets/icons/intensity.svg" alt="Intensity" />
+                                                </div>
+                                            </div>
+                                            <!-- Range Selector UI (Initially Hidden) -->
+                                            <div id="rangeSelectorContainer" class="range-selector hidden">
+                                                <div class="slider-container">
+                                                    <label for="range_slider">
+                                                        <i class="fa-solid fa-arrows-alt-h"></i> Intensity Range:
+                                                    </label>
+                                                    <input type="range" id="range_slider" class="range-slider" min="0" max="100" value="50">
+                                                    <span id="range_value">50</span>
+                                                </div>
+                                                <button id="applyRangeBtn" class="apply-button">
+                                                    <i class="fa-solid fa-check"></i> Apply
+                                                </button>
                                             </div>
                                             <div class="image-container">
                                                 <img id="x_profile_plot" alt="X-Profile Plot" style="display:none;">
@@ -171,6 +187,22 @@
                                                 <div class="subtab-action-button" id="commandYBtn">
                                                     <img src="assets/icons/command.svg" data-modal="command.html" data-target-modal="commandModal" alt="command button" />
                                                 </div>
+                                                <div class="subtab-action-button" id="intensityYBtn">
+                                                    <img src="assets/icons/intensity.svg" alt="Intensity" />
+                                                </div>
+                                            </div>
+                                            <!-- Range Selector UI (Initially Hidden) -->
+                                            <div id="rangeSelectorContainer" class="range-selector hidden">
+                                                <div class="slider-container">
+                                                    <label for="range_slider">
+                                                        <i class="fa-solid fa-arrows-alt-h"></i> Intensity Range:
+                                                    </label>
+                                                    <input type="range" id="range_slider" class="range-slider" min="0" max="100" value="50">
+                                                    <span id="range_value">50</span>
+                                                </div>
+                                                <button id="applyRangeBtn" class="apply-button">
+                                                    <i class="fa-solid fa-check"></i> Apply
+                                                </button>
                                             </div>
                                             <div class="image-container">
                                                 <img id="y_profile_plot" alt="Y-Profile Plot" style="display:none;">
