@@ -29,7 +29,7 @@ def ensure_numeric_index_and_columns(df):
     return df
 
 
-def load_and_store_data(file_paths, add_str='', add_str2=' K'):
+def load_and_store_data(file_paths, add_str='Experiment ', add_str2=''):
     explist = []
     exptitles = []
 
@@ -77,6 +77,7 @@ def load_and_store_data(file_paths, add_str='', add_str2=' K'):
     file_info.sort(key=lambda x: x[0])
 
     for idx, (path, df) in enumerate(file_info):
+        idx += 1
         filename = f"{idx:04d}"
         variable_name = add_str + filename + add_str2
         explist.append(df)
