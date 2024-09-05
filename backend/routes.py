@@ -1,7 +1,7 @@
 import os
 import logging
 import traceback
-from flask import Blueprint, request, jsonify, session, send_file, make_response
+from flask import Blueprint, request, jsonify, session, send_file, make_response, abort
 from werkzeug.utils import secure_filename
 from file_processor import get_sorted_files, load_and_store_data
 from plotter import shift_and_preview, plot_data_with_q_conversion, create_plot
@@ -235,40 +235,52 @@ def transform():
         return jsonify({'error': f'Server error: {str(e)}', 'traceback': traceback.format_exc()}), 500
 
 
-@main_bp.route('/export-csv-zip', methods=['POST'])
-def export_csv_zip():
+@main_bp.route('/export-csv-files', methods=['POST'])
+def export_csv_files():
     try:
         data = request.json
-        explist_path = data.get('explist')
+        explist_path = data.get('latest_explist')
         exptitles = data.get('exptitles', [])
 
         if not explist_path or not exptitles:
-            return jsonify({'error': 'Missing explist or exptitles'}), 400
+            return jsonify({'error': 'Missing explist path or exptitles in request'}), 400
 
-        # Load the explist data from a pickle file
-        try:
-            with open(explist_path, 'rb') as f:
-                explist = pickle.load(f)
-        except Exception as e:
-            logging.error(f"Failed to load explist data from {explist_path}: {str(e)}")
-            return jsonify({'error': f'Failed to load explist data from {explist_path}'}), 500
+        # Load the explist data from the file
+        with open(explist_path, 'rb') as f:
+            explist = pickle.load(f)
 
-        if explist is None:
-            return jsonify({'error': f'Explist data is empty or corrupted in {explist_path}'}), 500
+        if len(explist) != len(exptitles):
+            return jsonify({'error': 'Explist data length does not match exptitles'}), 400
 
-        # Create a ZIP file in memory
-        memory_file = BytesIO()
-        with zipfile.ZipFile(memory_file, 'w') as zf:
-            for i, title in enumerate(exptitles):
-                # Assuming 'explist' is a DataFrame or similar structure
-                csv_data = explist.to_csv(index=True)
-                file_name = f'exported_{title}.csv'
-                zf.writestr(file_name, csv_data)
-        
-        memory_file.seek(0)
-        return send_file(memory_file, attachment_filename='exported_data.zip', as_attachment=True)
+        output_dir = os.path.join('exports', 'csv_files')
+        os.makedirs(output_dir, exist_ok=True)
+
+        saved_files = []
+        for i, df in enumerate(explist):
+            file_name = f'{exptitles[i]}.csv'
+            file_path = os.path.join(output_dir, file_name)
+            df.to_csv(file_path, index=False)
+            saved_files.append(file_path)
+
+        return jsonify({'message': 'All CSV files were successfully saved.', 'files': saved_files})
 
     except Exception as e:
-        logging.error(f"Error in export_csv_zip: {str(e)}")
+        logging.error(f"Error in export_csv_files: {str(e)}")
         logging.error(traceback.format_exc())
         return jsonify({'error': f'Server error: {str(e)}', 'traceback': traceback.format_exc()}), 500
+
+
+@main_bp.route('/download/<filename>', methods=['GET'])
+def download_file(filename):
+    try:
+        directory = os.path.abspath('exports/csv_files')
+        file_path = os.path.join(directory, filename)
+
+        if not os.path.commonpath([file_path, directory]) == directory or not os.path.isfile(file_path):
+            abort(404)
+
+        return send_file(file_path, as_attachment=True)
+
+    except Exception as e:
+        logging.error(f"Error downloading file: {str(e)}")
+        return jsonify({'error': f'Failed to download file: {str(e)}'}), 500
