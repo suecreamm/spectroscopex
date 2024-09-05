@@ -379,63 +379,56 @@ export function initializeFileUploadHandler() {
         }
     }
     
-        
     async function exportCSVFiles() {
-        console.log('exportCSVFiles called.');
-        if (!lastUploadedData) {
+        if (!lastUploadedData || !lastUploadedData.latest_explist || !lastUploadedData.exptitles) {
             updateUploadMessage('No data available to export as CSV');
             return;
         }
     
-        if (!savedDirectoryPath) {
-            console.log('No saved directory path found. Asking user to select one.');
-            savedDirectoryPath = await window.electron.selectSaveDirectory();
-        }
-    
-        if (!savedDirectoryPath) {
-            updateUploadMessage('No save directory selected');
-            return;
-        }
-    
-        const dataToSend = lastUploadedData.latest_explist;
-        console.log('Data to send:', dataToSend);
-    
-        if (!dataToSend) {
-            updateUploadMessage('No latest explist data available to export.');
-            return;
-        }
+        disableButtons();
+        showLoadingSpinner();
     
         try {
-            const response = await fetch('http://localhost:7654/export-csv-zip', {
+            const response = await fetch('http://localhost:7654/export-csv-files', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    explist: dataToSend,
+                    latest_explist: lastUploadedData.latest_explist,  // This is now a file path
                     exptitles: lastUploadedData.exptitles
                 })
             });
     
             if (!response.ok) {
-                throw new Error(`Server error ${response.status}: ${response.statusText}`);
+                const errorText = await response.text();
+                throw new Error(`Server error ${response.status}: ${response.statusText}\n${errorText}`);
             }
     
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'exported_data.zip';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
+            const result = await response.json();
+            if (result.error) {
+                throw new Error(result.error);
+            }
     
-            updateUploadMessage('CSV files exported and downloaded successfully as a ZIP file.');
+            // Trigger downloads for each file
+            result.files.forEach(filePath => {
+                const fileName = filePath.split('/').pop();
+                const downloadLink = document.createElement('a');
+                downloadLink.href = `http://localhost:7654/download/${encodeURIComponent(fileName)}`;
+                downloadLink.download = fileName;
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+            });
+    
+            updateUploadMessage('CSV files have been generated and download started.');
+            showModalMessage('CSV files have been generated and are being downloaded to your default download folder.');
         } catch (error) {
             updateUploadMessage(`Failed to export CSV files: ${error.message}`);
             console.error('Error exporting CSV files:', error);
+        } finally {
+            hideLoadingSpinner();
+            enableButtons();
         }
-    }   
-
+    }
     
     function saveImage(imageElement, fileName) {
         console.log(`Saving image: ${fileName}`);

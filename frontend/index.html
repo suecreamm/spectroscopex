@@ -153,14 +153,17 @@
                                                     <img src="assets/icons/intensity.svg" alt="Intensity" />
                                                 </div>
                                             </div>
-                                            <!-- Range Selector UI (Initially Hidden) -->
-                                            <div id="rangeSelectorContainer" class="range-selector hidden">
+                                            <!-- Intensity Window Selector UI (Initially Hidden) -->
+                                            <div id="rangeSelectorContainer" class="range-selector">
+                                                <label for="range_slider">
+                                                    <i class="fa-solid fa-arrows-alt-h"></i> Intensity Window:
+                                                </label>
                                                 <div class="slider-container">
-                                                    <label for="range_slider">
-                                                        <i class="fa-solid fa-arrows-alt-h"></i> Intensity Range:
-                                                    </label>
-                                                    <input type="range" id="range_slider" class="range-slider" min="0" max="100" value="50">
-                                                    <span id="range_value">50</span>
+                                                    <input type="range" id="min_slider" class="range-slider" min="0" max="100" value="0">
+                                                    <input type="range" id="max_slider" class="range-slider" min="0" max="100" value="100">
+                                                </div>
+                                                <div class="value-container">
+                                                    <span id="min_value">0</span> - <span id="max_value">100</span>
                                                 </div>
                                                 <button id="applyRangeBtn" class="apply-button">
                                                     <i class="fa-solid fa-check"></i> Apply
