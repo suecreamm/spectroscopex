@@ -167,14 +167,14 @@ h1, h2, h3, h4, h5, h6, .title, .btn, .button {
 }
 
 #flipUdBtn, #flipLrBtn, #rotateCcw90Btn, #rotateCw90Btn, #blurBtn, #sharpenBtn,
-#commandBtn, #commandXBtn, #commandYBtn {
+#commandBtn, #commandXBtn, #commandYBtn, #intensityXBtn, #intensityYBtn {
   width: 36px;
   height: 36px;
   transition: background-color 0.3s ease, transform 0.3s ease, color 0.3s ease;
 }
 
 #flipUdBtn img, #flipLrBtn img, #rotateCcw90Btn img, #rotateCw90Btn img, #blurBtn img, #sharpenBtn img,
-#commandBtn img, #commandXBtn img, #commandYBtn img {
+#commandBtn img, #commandXBtn img, #commandYBtn img, #intensityXBtn img, #intensityYBtn img {
   width: 20px;
   height: 20px;
   transform: scale(1.2);
@@ -182,13 +182,15 @@ h1, h2, h3, h4, h5, h6, .title, .btn, .button {
 
 #flipUdBtn:hover, #flipLrBtn:hover, #rotateCcw90Btn:hover, #rotateCw90Btn:hover,
 #blurBtn:hover, #sharpenBtn:hover,
-#commandBtn:hover, #commandXBtn:hover, #commandYBtn:hover {
+#commandBtn:hover, #commandXBtn:hover, #commandYBtn:hover,
+#intensityXBtn:hover, #intensityYBtn:hover  {
   background-color: #555;
 }
 
 #flipUdBtn:hover img, #flipLrBtn:hover img, #rotateCcw90Btn:hover img, #rotateCw90Btn:hover img,
 #resetBtn:hover img, #blurBtn:hover img, #sharpenBtn:hover img,
-#commandBtn:hover img, #commandXBtn:hover img, #commandYBtn:hover img {
+#commandBtn:hover img, #commandXBtn:hover img, #commandYBtn:hover img,
+#intensityXBtn:hover img, #intensityYBtn:hover img {
   filter: invert(1) brightness(2);
 }
 
@@ -274,6 +276,115 @@ h1, h2, h3, h4, h5, h6, .title, .btn, .button {
   height: auto;
   display: block;
   margin: 0 auto;
+}
+
+/* Slider */
+
+input[type="range"] {
+  /* -webkit-appearance: none; */
+  width: 90%;
+  height: 8px;
+  background: #ddd;
+  border-radius: 5px;
+  outline: none;
+  margin-top: 5px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #8cc9f0;
+  cursor: pointer;
+  box-shadow: 0 0 5px rgba(0,0,0,0.2); /* 약간의 그림자 */
+  margin-top: 5px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #8cc9f0;
+  cursor: pointer;
+  box-shadow: 0 0 5px rgba(0,0,0,0.2);
+  margin-top: 5px;
+}
+
+input[type="range"]::-ms-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #8cc9f0;
+  cursor: pointer;
+  box-shadow: 0 0 5px rgba(0,0,0,0.2);
+}
+
+/* Card Slider Container */
+.card-slider-container {
+  display: flex;
+  overflow-x: auto; 
+  padding: 20px;
+  gap: 20px; /* 카드 간 간격 */
+  scroll-snap-type: x mandatory; 
+  justify-content: center; 
+}
+
+/* Card style */
+.range-selector {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+  
+  min-width: 350px;
+  scroll-snap-align: center;  
+  transition: box-shadow 0.3s ease;
+}
+
+.range-selector:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.card-slider-container {
+  max-width: 95%;
+  margin: 0 auto;
+}
+
+.card-slider-container::-webkit-scrollbar {
+  display: none; /* No scroll bar */
+}
+
+ /* Labels and Sliders */
+.slider-container {
+  padding-left: 20px;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.slider-container div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 20px;
+  flex: 1;
+}
+
+.slider-container label {
+  margin-bottom: 5px;
+  font-weight: bold;
+  text-align: center;
+  width: 100%;
+}
+
+.value-container {
+  margin-bottom: 10px;
 }
 
 

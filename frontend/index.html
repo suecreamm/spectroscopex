@@ -138,37 +138,47 @@
                                         </div>
                                         
                                             
-                                        
-
                                         <div class="tabPanel" id="x_profile">
                                             <div class="subtab-action-buttons">
                                                 <div class="subtab-action-button active" id="meanBtnX"><i class="fa-solid fa-chart-bar"></i> Mean</div>
                                                 <div class="subtab-action-button" id="medianBtnX"><i class="fa-solid fa-balance-scale"></i> Median</div>
                                             </div>
-                                            <div class="subtab-action-buttons">
+                                            <!--div class="subtab-action-buttons">
                                                 <div class="subtab-action-button" id="commandXBtn">
                                                     <img src="assets/icons/command.svg" data-modal="command.html" data-target-modal="commandModal" alt="command button" />
                                                 </div>
                                                 <div class="subtab-action-button" id="intensityXBtn">
                                                     <img src="assets/icons/intensity.svg" alt="Intensity" />
                                                 </div>
-                                            </div>
+                                            </div -->
                                             <!-- Intensity Window Selector UI (Initially Hidden) -->
-                                            <div id="rangeSelectorContainer" class="range-selector">
-                                                <label for="range_slider">
-                                                    <i class="fa-solid fa-arrows-alt-h"></i> Intensity Window:
-                                                </label>
-                                                <div class="slider-container">
-                                                    <input type="range" id="min_slider" class="range-slider" min="0" max="100" value="0">
-                                                    <input type="range" id="max_slider" class="range-slider" min="0" max="100" value="100">
+                                            <div class="card-slider-container">
+                                                <div id="xrangeSelectorContainer" class="range-selector">
+                                                    <label for="xrange_slider">
+                                                        <i class="fa-solid fa-arrows-alt-h"></i> Intensity Window:
+                                                    </label>
+                                                    
+                                                    <div class="slider-container">
+                                                        <div>
+                                                            <label for="xvalue-slider">Value</label>
+                                                            <input type="range" id="xvalue-slider" class="range-slider" min="0" max="100" value="50">
+                                                        </div>
+                                                        <div>
+                                                            <label for="xwindow-slider">Window Size</label>
+                                                            <input type="range" id="xwindow-slider" class="range-slider" min="0" max="100" value="20">
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="value-container">
+                                                        <span id="xvalue-value">50</span> - Window Size: <span id="xwindow-value">20</span>
+                                                    </div>
+                                                    
+                                                    <button id="applyXRangeBtn" class="apply-button">
+                                                        <i class="fa-solid fa-check"></i> Apply
+                                                    </button>
                                                 </div>
-                                                <div class="value-container">
-                                                    <span id="min_value">0</span> - <span id="max_value">100</span>
-                                                </div>
-                                                <button id="applyRangeBtn" class="apply-button">
-                                                    <i class="fa-solid fa-check"></i> Apply
-                                                </button>
                                             </div>
+                                            
                                             <div class="image-container">
                                                 <img id="x_profile_plot" alt="X-Profile Plot" style="display:none;">
                                                 <div class="button-container">
@@ -186,27 +196,35 @@
                                                 <div class="subtab-action-button active" id="meanBtnY"><i class="fa-solid fa-chart-bar"></i> Mean</div>
                                                 <div class="subtab-action-button" id="medianBtnY"><i class="fa-solid fa-balance-scale"></i> Median</div>
                                             </div>
-                                            <div class="subtab-action-buttons">
-                                                <div class="subtab-action-button" id="commandYBtn">
-                                                    <img src="assets/icons/command.svg" data-modal="command.html" data-target-modal="commandModal" alt="command button" />
-                                                </div>
-                                                <div class="subtab-action-button" id="intensityYBtn">
-                                                    <img src="assets/icons/intensity.svg" alt="Intensity" />
-                                                </div>
-                                            </div>
+                                            
                                             <!-- Range Selector UI (Initially Hidden) -->
-                                            <div id="rangeSelectorContainer" class="range-selector hidden">
-                                                <div class="slider-container">
-                                                    <label for="range_slider">
-                                                        <i class="fa-solid fa-arrows-alt-h"></i> Intensity Range:
+                                            <div class="card-slider-container">
+                                                <div id="yrangeSelectorContainer" class="range-selector">
+                                                    <label for="yrange_slider">
+                                                        <i class="fa-solid fa-arrows-alt-v"></i> Intensity Window:
                                                     </label>
-                                                    <input type="range" id="range_slider" class="range-slider" min="0" max="100" value="50">
-                                                    <span id="range_value">50</span>
+                                                    
+                                                    <div class="slider-container">
+                                                        <div>
+                                                            <label for="yvalue-slider">Value</label>
+                                                            <input type="range" id="yvalue-slider" class="range-slider" min="0" max="100" value="50">
+                                                        </div>
+                                                        <div>
+                                                            <label for="ywindow-slider">Window Size</label>
+                                                            <input type="range" id="ywindow-slider" class="range-slider" min="0" max="100" value="20">
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="value-container">
+                                                        <span id="yvalue-value">50</span> - Window Size: <span id="ywindow-value">20</span>
+                                                    </div>
+                                                    
+                                                    <button id="applyYRangeBtn" class="apply-button">
+                                                        <i class="fa-solid fa-check"></i> Apply
+                                                    </button>
                                                 </div>
-                                                <button id="applyRangeBtn" class="apply-button">
-                                                    <i class="fa-solid fa-check"></i> Apply
-                                                </button>
                                             </div>
+                                            
                                             <div class="image-container">
                                                 <img id="y_profile_plot" alt="Y-Profile Plot" style="display:none;">
                                                 <div class="button-container">

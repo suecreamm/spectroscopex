@@ -1,10 +1,15 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
+import matplotlib.font_manager as fm
 import math
 from scipy.optimize import curve_fit
 from io import BytesIO
 import base64
+from plotter import angle_to_q, process_q_values
+
+plt.switch_backend('Agg')
 
 def gaussian(x, a, x0, sigma):
     return a * np.exp(-(x - x0) ** 2 / (2 * sigma ** 2))
@@ -169,3 +174,177 @@ def generate_profile_data(explist, exptitles, profile_axis, method='mean'):
         return response_data
     except Exception as e:
         raise
+
+
+def plot_intensity_profiles_with_heatmap(explist, exptitles, gauss_y=None, value=75, window_size=0, plot='x',
+                                         aggregation='mean', x_min=None, x_max=None, y_min=None, y_max=None,
+                                         figsize=(5, 5), title_fontsize=16, label_fontsize=12, tick_fontsize=10,
+                                         cmap='inferno', font_family='sans-serif', font_style='normal', font_weight='normal',
+                                         apply_log=True, q_conversion=False, x_label=None, 
+                                         width_ratio=(3.5, 1), vertical=True, hide_ticks=True, lgnd=False):
+    """
+    Plot intensity profiles and heatmaps for multiple experiments.
+    """
+    font_prop = fm.FontProperties(family=font_family, style=font_style, weight=font_weight)
+    
+    num_exp = len(explist)
+    fig, axs = plt.subplots(num_exp, 2, figsize=(figsize[0], figsize[1] * num_exp), 
+                            gridspec_kw={'width_ratios': width_ratio})
+    
+    if num_exp == 1:
+        axs = axs.reshape(1, -1)
+
+    def filter_dataframe_by_range(df, x_min, x_max, y_min, y_max):
+        columns_as_float = df.columns.astype(float)
+        index_as_float = df.index.astype(float)
+        
+        x_mask = pd.Series(True, index=columns_as_float)
+        y_mask = pd.Series(True, index=index_as_float)
+        
+        if x_min is not None:
+            x_mask &= columns_as_float >= x_min
+        if x_max is not None:
+            x_mask &= columns_as_float <= x_max
+        if y_min is not None:
+            y_mask &= index_as_float >= y_min
+        if y_max is not None:
+            y_mask &= index_as_float <= y_max
+        
+        filtered_df = df.loc[y_mask, x_mask]
+        return filtered_df
+
+    def find_nearest(array, value):
+        array = np.asarray(array)
+        idx = (np.abs(array - value)).argmin()
+        return array[idx]
+
+    for idx, (df, title) in enumerate(zip(explist, exptitles)):
+        ax1, ax2 = axs[idx]
+
+        # Filter the dataframe based on provided x_min, x_max, y_min, y_max
+        df = filter_dataframe_by_range(df, x_min, x_max, y_min, y_max)
+
+        Z = df.values
+        if Z.size == 0:
+            print(f"Warning: No data in the specified range for {title}")
+            continue
+
+        if apply_log and np.issubdtype(Z.dtype, np.number):
+            Z = np.log1p(Z)
+
+        columns = df.columns.astype(float)
+        energy_losses = df.index.astype(float)
+
+        if q_conversion and gauss_y is not None:
+            E0 = gauss_y[idx]
+            angles = columns * np.pi / 180
+            q_values = np.array([angle_to_q(angle, E0, 0) for angle in angles])
+            processed_q_values = process_q_values(q_values)
+        else:
+            processed_q_values = columns
+
+        extent = [np.min(processed_q_values), np.max(processed_q_values),
+                  np.min(energy_losses), np.max(energy_losses)]
+
+        # Plot heatmap
+        im = ax1.imshow(Z, aspect='auto', origin='lower', extent=extent, cmap=cmap)
+
+        ax1.set_title(f"{title}, E0 = {E0:.6f} eV" if q_conversion and gauss_y is not None else title, 
+                      fontsize=title_fontsize, fontproperties=font_prop)
+
+        if x_label is not None:
+            ax1.set_xlabel(x_label, fontsize=label_fontsize, fontproperties=font_prop)
+        else:
+            ax1.set_xlabel('q (Å⁻¹)' if q_conversion and gauss_y is not None else 'Angle (degree)', 
+                           fontsize=label_fontsize, fontproperties=font_prop)
+
+        ax1.set_ylabel('Loss Energy (eV)', fontsize=label_fontsize, fontproperties=font_prop)
+
+        for label in ax1.get_xticklabels() + ax1.get_yticklabels():
+            label.set_fontproperties(font_prop)
+
+        ax1.tick_params(axis='both', which='major', labelsize=tick_fontsize)
+
+        # Plot intensity profile
+        if plot == 'x':
+            nearest_value = find_nearest(processed_q_values, value)
+            window_start = nearest_value - window_size / 2
+            window_end = nearest_value + window_size / 2
+            window_cols = processed_q_values[(processed_q_values >= window_start) & (processed_q_values <= window_end)]
+            
+            if window_size > 0:
+                if aggregation == 'mean':
+                    intensity_values = df.loc[:, window_cols].mean(axis=1)
+                elif aggregation == 'median':
+                    intensity_values = df.loc[:, window_cols].median(axis=1)
+                else:
+                    raise ValueError("Invalid aggregation method. Use 'mean' or 'median'.")
+            else:
+                intensity_values = df.loc[:, nearest_value]
+
+            y_values = energy_losses
+            if vertical:
+                ax2.plot(intensity_values, y_values, label=f"{title}")
+                ax2.set_xlabel("Intensity\n(Arb. Units)")
+                ax2.set_ylabel("Loss Energy (eV)")
+            else:
+                ax2.plot(y_values, intensity_values, label=f"{title}")
+                ax2.set_xlabel("Loss Energy (eV)")
+                ax2.set_ylabel("Intensity\n(Arb. Units)")
+            
+            if window_size > 0:
+                ax1.axvspan(window_start, window_end, color='y', alpha=0.2)
+            print(f"Using x_value: {nearest_value} with window size: {window_size} for {title}")
+            
+        elif plot == 'y':
+            nearest_value = find_nearest(energy_losses, value)
+            window_start = nearest_value - window_size / 2
+            window_end = nearest_value + window_size / 2
+            window_rows = energy_losses[(energy_losses >= window_start) & (energy_losses <= window_end)]
+            
+            if window_size > 0:
+                if aggregation == 'mean':
+                    intensity_values = df.loc[window_rows, :].mean(axis=0)
+                elif aggregation == 'median':
+                    intensity_values = df.loc[window_rows, :].median(axis=0)
+                else:
+                    raise ValueError("Invalid aggregation method. Use 'mean' or 'median'.")
+            else:
+                intensity_values = df.loc[nearest_value, :]
+
+            x_values = processed_q_values
+            if vertical:
+                ax2.plot(intensity_values, x_values, label=f"{title}")
+                ax2.set_xlabel("Intensity (Arb. Units)")
+                ax2.set_ylabel('q (Å⁻¹)' if q_conversion and gauss_y is not None else 'Angle (degree)')
+            else:
+                ax2.plot(x_values, intensity_values, label=f"{title}")
+                ax2.set_xlabel('q (Å⁻¹)' if q_conversion and gauss_y is not None else 'Angle (degree)')
+                ax2.set_ylabel("Intensity (Arb. Units)")
+            
+            if window_size > 0:
+                ax1.axhspan(window_start, window_end, color='y', alpha=0.2)
+            print(f"Using y_value: {nearest_value} with window size: {window_size} for {title}")
+
+        ax2.set_title(f'{title} Intensity Profile', fontsize=title_fontsize, fontproperties=font_prop)
+        ax2.tick_params(axis='both', which='major', labelsize=tick_fontsize)
+        for label in ax2.get_xticklabels() + ax2.get_yticklabels():
+            label.set_fontproperties(font_prop)
+
+        if vertical and hide_ticks:
+            ax2.set_xticks([])
+            ax2.set_yticks([])
+
+        if lgnd:
+            ax2.legend()
+
+        ax2.grid(False)
+
+    plt.tight_layout()
+    
+    img_bytes = BytesIO()
+    plt.savefig(img_bytes, format='png', bbox_inches='tight')
+    img_bytes.seek(0)
+    plt.close(fig)
+    
+    return img_bytes

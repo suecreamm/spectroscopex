@@ -1,5 +1,6 @@
 import { showModalMessage } from '../../assets/js/modalMessage.js';
 import { showLoadingSpinner, hideLoadingSpinner, disableButtons, enableButtons } from '../../assets/js/uiHelpers.js';
+import { initializeSliderHandler } from './SliderHandler.js';
 
 export function initializeFileUploadHandler() {
     const elements = {
@@ -492,6 +493,7 @@ export function initializeFileUploadHandler() {
     
 
     initializeEventListeners();
+    initializeSliderHandler();
 
     return {
         updateUploadMessage,

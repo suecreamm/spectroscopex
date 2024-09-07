@@ -4,8 +4,8 @@ import traceback
 from flask import Blueprint, request, jsonify, session, send_file, make_response, abort
 from werkzeug.utils import secure_filename
 from file_processor import get_sorted_files, load_and_store_data
-from plotter import shift_and_preview, plot_data_with_q_conversion, create_plot
-from profile_analyzer import generate_profile_data
+from plotter import shift_and_preview, plot_data_with_q_conversion
+from profile_analyzer import generate_profile_data, plot_intensity_profiles_with_heatmap
 from transformer import transform_data
 import uuid
 import json
@@ -284,3 +284,28 @@ def download_file(filename):
     except Exception as e:
         logging.error(f"Error downloading file: {str(e)}")
         return jsonify({'error': f'Failed to download file: {str(e)}'}), 500
+
+
+@main_bp.route('/plot_intensity_profiles', methods=['POST'])
+def plot_intensity_profiles():
+    data = request.json
+    
+    x_min = float(data.get('x_min', None))
+    x_max = float(data.get('x_max', None))
+    y_min = float(data.get('y_min', None))
+    y_max = float(data.get('y_max', None))
+
+    """
+    img_bytes = plot_intensity_profiles_with_heatmap(
+        explist, exptitles,
+        value=75, window_size=5, plot='x',
+        aggregation='mean',
+        x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
+        q_conversion=False, apply_log=True,
+        figsize=(5, 5),
+        width_ratio=(3.5, 1),
+        hide_ticks=True,
+    )
+
+    return send_file(img_bytes, mimetype='image/png')
+    """
