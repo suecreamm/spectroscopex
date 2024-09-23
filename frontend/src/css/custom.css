@@ -1,0 +1,559 @@
+/* Font */
+@font-face {
+  font-family: 'Montserrat';
+  src: url('../../assets/webfonts/Montserrat-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Montserrat';
+  src: url('../../assets/webfonts/Montserrat-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Montserrat';
+  src: url('../../assets/webfonts/Montserrat-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Montserrat';
+  src: url('../../assets/webfonts/Montserrat-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+body, h1, h2, h3, h4, h5, h6 {
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* Font weight settings for different headings */
+h1 {
+  font-weight: 700; /* Bold */
+}
+
+h2, h3, h4 {
+  font-weight: 500; /* Medium */
+}
+
+h5, h6 {
+  font-weight: 400; /* Regular */
+}
+
+body {
+  font-weight: 300; /* Light */
+}
+
+button {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 400;
+}
+
+.save-button {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 400;
+}
+
+
+/* 파일 업로드 버튼 스타일 */
+.upload-btn-wrapper {
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+  margin-top: 15px;
+}
+
+.upload-btn {
+  color: white;
+  padding: 2px 2px;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.upload-btn-wrapper input[type=file] {
+  font-size: 100px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+}
+
+h1, h2, h3, h4, h5, h6, .title, .btn, .button {
+  text-transform: none;
+}
+
+.tabs {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.tab {
+  flex: 1 0 21%;
+  padding: 10px;
+  margin: 5px;
+  text-align: center;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.tab.active {
+  background-color: #f0f0f0;
+  font-weight: bold;
+}
+
+.tab i {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.tab-action-buttons, .subtab-action-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin: 10px 0;
+}
+
+.tab-action-button, .subtab-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 120px;
+  padding: 10px 15px;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+  margin: 3px;
+}
+
+.tab-action-button i, .subtab-action-button i {
+  margin-right: 8px;
+}
+
+.tab-action-button.active, .subtab-action-button.active {
+  background-color: #333;
+  color: #fff;
+}
+
+.tab-action-button:hover, .subtab-action-button:hover {
+  background-color: #555;
+  color: #fff;
+}
+
+
+
+
+#resetBtn {
+  width: 36px;
+  height: 36px;  
+  background-color: transparent;
+  margin-left: auto;
+  transition: background-color 0.3s ease, transform 0.3s ease, color 0.3s ease;
+}
+
+#flipUdBtn, #flipLrBtn, #rotateCcw90Btn, #rotateCw90Btn, #blurBtn, #sharpenBtn,
+#commandBtn, #commandXBtn, #commandYBtn, #intensityXBtn, #intensityYBtn {
+  width: 36px;
+  height: 36px;
+  transition: background-color 0.3s ease, transform 0.3s ease, color 0.3s ease;
+}
+
+#flipUdBtn img, #flipLrBtn img, #rotateCcw90Btn img, #rotateCw90Btn img, #blurBtn img, #sharpenBtn img,
+#commandBtn img, #commandXBtn img, #commandYBtn img, #intensityXBtn img, #intensityYBtn img {
+  width: 20px;
+  height: 20px;
+  transform: scale(1.2);
+}
+
+#flipUdBtn:hover, #flipLrBtn:hover, #rotateCcw90Btn:hover, #rotateCw90Btn:hover,
+#blurBtn:hover, #sharpenBtn:hover,
+#commandBtn:hover, #commandXBtn:hover, #commandYBtn:hover,
+#intensityXBtn:hover, #intensityYBtn:hover  {
+  background-color: #555;
+}
+
+#flipUdBtn:hover img, #flipLrBtn:hover img, #rotateCcw90Btn:hover img, #rotateCw90Btn:hover img,
+#resetBtn:hover img, #blurBtn:hover img, #sharpenBtn:hover img,
+#commandBtn:hover img, #commandXBtn:hover img, #commandYBtn:hover img,
+#intensityXBtn:hover img, #intensityYBtn:hover img {
+  filter: invert(1) brightness(2);
+}
+
+#resetBtn:hover {
+  background-color: red;
+}
+
+/* Navigation Buttons */
+.navigation-buttons {
+  display: none; /* 기본적으로 숨김 */
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.navigation-button {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  border-radius: 50%;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  font-size: 24px;
+  cursor: pointer;
+  margin: 0 10px;
+  transition: background-color 0.3s;
+  border: none; /* 기본 버튼 테두리 제거 */
+  box-shadow: none; /* 기본 그림자 제거 */
+}
+
+.navigation-button:hover {
+  background-color: #555;
+}
+
+.navigation-button .fas {
+  font-size: 24px; /* 아이콘 크기 조정 */
+}
+
+.subtab-action-buttons {
+  display: flex;
+  justify-content: center; /* 중앙 정렬 */
+  align-items: center; /* 세로축 중앙 정렬 */
+  margin-top: 10px;
+  margin-bottom: 20px; /* 버튼과 다른 콘텐츠 사이에 간격 추가 */
+}
+
+.subtab-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  padding: 10px 15px;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+  margin: 0 5px; /* 버튼 간의 간격 조정 */
+}
+
+.subtab-action-button img{
+  width: 20px; 
+  height: 20px;
+  transition: filter 0.3s ease, fill 0.3s ease; 
+}
+
+.subtab-action-button i {
+  margin-right: 8px;
+}
+
+/* Tab Function Contents */
+.tabPanel {
+  display: none;
+}
+
+.tabPanel.active {
+  display: block;
+}
+
+/* 이미지 반응형 스타일 추가 */
+#previewImage, #x_profile_plot, #y_profile_plot {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+/* Slider */
+
+input[type="range"] {
+  /* -webkit-appearance: none; */
+  width: 90%;
+  height: 8px;
+  background: #ddd;
+  border-radius: 5px;
+  outline: none;
+  margin-top: 5px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #8cc9f0;
+  cursor: pointer;
+  box-shadow: 0 0 5px rgba(0,0,0,0.2); /* 약간의 그림자 */
+  margin-top: 5px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #8cc9f0;
+  cursor: pointer;
+  box-shadow: 0 0 5px rgba(0,0,0,0.2);
+  margin-top: 5px;
+}
+
+input[type="range"]::-ms-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #8cc9f0;
+  cursor: pointer;
+  box-shadow: 0 0 5px rgba(0,0,0,0.2);
+}
+
+/* Card Slider Container */
+.card-slider-container {
+  display: flex;
+  overflow-x: auto; 
+  padding: 20px;
+  gap: 20px; /* 카드 간 간격 */
+  scroll-snap-type: x mandatory; 
+  justify-content: center; 
+}
+
+/* Card style */
+.range-selector {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+  
+  min-width: 350px;
+  scroll-snap-align: center;  
+  transition: box-shadow 0.3s ease;
+}
+
+.range-selector:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.card-slider-container {
+  max-width: 95%;
+  margin: 0 auto;
+}
+
+.card-slider-container::-webkit-scrollbar {
+  display: none; /* No scroll bar */
+}
+
+ /* Labels and Sliders */
+.slider-container {
+  padding-left: 20px;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.slider-container div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 20px;
+  flex: 1;
+}
+
+.slider-container label {
+  margin-bottom: 5px;
+  font-weight: bold;
+  text-align: center;
+  width: 100%;
+}
+
+.value-container {
+  margin-bottom: 10px;
+}
+
+
+.image-container {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 50px; /* 하단 여백 추가 */
+}
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px; /* 이미지 컨테이너와의 상단 간격 */
+}
+
+
+/* Modal Background */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1000; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgba(0,0,0,0.5); /* Black with opacity */
+}
+
+/* Modal Content Box */
+.modal {
+  display: none; /* 기본적으로 숨김 */
+  position: fixed; /* 화면에 고정 */
+  z-index: 10000;
+  padding-top: 10%;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto; /* 스크롤바를 사용 가능하게 */
+  background-color: rgba(0, 0, 0, 0.7); /* 반투명 검은 배경 */
+}
+
+.modal-content {
+  background-color: #fff; /* 흰색 배경 */
+  margin: auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+  max-width: 600px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  position: relative;
+  color: #636363;
+}
+
+.modal-content h2, h3, h4, h5, h6{
+  color: #636363; 
+}
+
+/* Close button */
+.close {
+  color: #636363;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: #c79cc8;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Command Form Style */
+#optionsInput {
+  background-color: #333;
+  color: #c79cc8;
+  border: 1px solid #c79cc8;
+  border-radius: 5px;
+  padding: 10px;
+  font-family: 'Consolas', Consolas, monospace; /* for terminal look */
+  font-size: 14px;
+  resize: vertical;
+  margin: 5px;
+}
+
+#plotOptionsForm label {
+  color: #555;
+  font-family: 'Consolas', Consolas, monospace;
+}
+
+#optionsInput::placeholder {
+  color: #c79cc8;
+  opacity: 0.5;
+}
+
+/* Form Submit Button */
+#plotOptionsForm button {
+  background-color: #c79cc8;
+  color: #333;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-family: 'Montserrat', sans-serif; /* Keep the consistent font style */
+}
+
+#plotOptionsForm button:hover {
+  background-color: #b36aa8; /* Slightly darker on hover */
+}
+
+#loadingSpinner {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); 
+  z-index: 9999; 
+  font-size: 3em; 
+  color: #c79cc8; 
+  padding: 20px;
+}
+
+.loading-spinner.active {
+  display: inline-block !important;
+}
+
+
+/* Media Queries for Responsiveness */
+@media screen and (max-width: 768px) {
+  .tab {
+    flex: 1 0 45%;
+  }
+  
+  .tab-action-button, .subtab-action-button {
+    width: 100px;
+    font-size: 12px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .tab {
+    flex: 1 0 100%;
+  }
+  
+  .tab-action-button, .subtab-action-button {
+    width: 90px;
+    font-size: 11px;
+  }
+}
+
+@media screen and (max-width: 736px) {
+  .toggle-button-wrapper {
+    justify-content: flex-end; /* 작은 화면에서도 오른쪽 정렬 유지 */
+  }
+}
+
+
+@media screen and (max-width: 768px) {
+  .modal-content {
+      width: 90%; /* Wider width on small screens */
+      padding: 15px; /* Less padding */
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .modal-content {
+      width: 95%; /* Almost full width on very small screens */
+      margin: 20% auto; /* More margin from the top */
+      padding: 10px; /* Less padding */
+  }
+}

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <title>SpectroscopeX</title>
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="src/css/custom.css">
+    
+    <link href="assets/css/all.min.css" rel="stylesheet" />
+    <noscript><link rel="stylesheet" href="assets/css/noscript.css"></noscript>
+</head>
+<body class="is-preload">
+    
+    <div id="wrapper">
+        
+                <header id="header" class="alt">
+                    <span class="logo"><img src="images/logo.svg" alt="" /></span>
+                    <h1 >SpectroscopeX </h1>
+                    <p>Analyze your EELS data with ease.<br />
+                    developed by <a href="">Suecreamm</a>.</p>
+                </header>
+
+
+            <!-- Nav -->
+            <nav id="nav">
+                <ul>
+                    <li class="submenu">
+                        <ul>
+				<li><a href="#upload" class="active">File Upload</a></li>
+				<li><a href="#analysis">Analysis</a></li>
+				<li><a href="#about">About This Project</a></li>
+			</ul>
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- Main -->
+					<div id="main">
+
+                        <!-- Get Started -->
+							<section id="upload" class="main special">
+								<header class="major">
+									<h2>Choose CSV Files</h2>
+									<p>Select one or more CSV files containing your spectroscopy data to begin analysis.<br>
+                                        Make sure your data is formatted correctly for optimal results.</p>
+								</header>
+
+                                <div class="upload-btn-wrapper">
+                                    <button class="upload-btn" id="uploadBtn"><i class="fa-solid fa-file-csv"></i></button>
+                                    <input type="file" id="fileInput" accept=".csv" multiple>
+                                </div>
+                                <div id="uploadMessage"></div>
+
+							</section>
+
+						<!-- First Section -->
+							<section id="analysis" class="main special">
+								<header class="major">
+									<h2>Analysis</h2>
+								</header>
+
+                                <div class="row gtr-50">
+                                    <div class="col-12">
+                                        <div class="tabs">
+                                            <div class="tab active" data-content="preview" id="previewTab">
+                                                <i class="fa-solid fa-magnifying-glass"></i> Preview
+                                            </div>
+                                            <div class="tab" data-content="x_profile">
+                                                <i class="fa-solid fa-x"></i> X-Profile
+                                            </div>
+                                            <div class="tab" data-content="y_profile">
+                                                <i class="fa-solid fa-y"></i> Y-Profile
+                                            </div>
+                                        </div>
+
+                                        <div class="tab-action-buttons">
+                                            <div class="tab-action-button active" id="viewAllBtn"><i class="fa-solid fa-grip"></i> View All</div>
+                                            <div class="tab-action-button" id="viewSingleBtn"><i class="fa-solid fa-square"></i> View One</div>
+                                        </div>
+
+                                        <div class="tabPanel active" id="preview">
+                                            <div class="button-container">
+                                                <div class="col-6 col-12-small">
+                                                    <input type="checkbox" id="q-energyloss">
+                                                    <label for="q-energyloss">q - Loss Energy</label>
+                                                </div>
+
+                                                <div class="col-6 col-12-small">
+                                                        <input type="checkbox" id="dataframetoOriginToggle" checked>
+                                                        <label for="dataframetoOriginToggle">Move Dataframe to Origin </label>
+                                                </div>
+                                            </div>
+
+                                            <div class="subtab-action-buttons">
+                                                <div class="subtab-action-button" id="flipUdBtn">
+                                                    <img src="assets/icons/flipUD.svg" alt="Flip Up-Down" />
+                                                </div>
+                                                <div class="subtab-action-button" id="flipLrBtn">
+                                                    <img src="assets/icons/flipLR.svg" alt="Flip Left-Right" />
+                                                </div>
+                                                <div class="subtab-action-button" id="rotateCcw90Btn">
+                                                    <img src="assets/icons/rotateCCW.svg" alt="Rotate CCW 90 degree" />
+                                                </div>
+                                                <div class="subtab-action-button" id="rotateCw90Btn">
+                                                    <img src="assets/icons/rotateCW.svg" alt="Rotate CW 90 degree" />
+                                                </div>
+                                                <div class="subtab-action-button" id="blurBtn">
+                                                    <img src="assets/icons/blur.svg" alt="Blur" />
+                                                </div>
+                                                <div class="subtab-action-button" id="sharpenBtn">
+                                                    <img src="assets/icons/sharpen.svg" alt="Sharpen" />
+                                                </div>
+                                                <div class="subtab-action-button" id="commandBtn">
+                                                    <img src="assets/icons/command.svg" data-modal="command.html" data-target-modal="commandModal" alt="command button" />
+                                                </div>
+                                                <div class="subtab-action-button" id="resetBtn">
+                                                    <img src="assets/icons/reset.svg" alt="Reset" />
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="image-container">
+                                                <img id="previewImage" alt="Preview Image">
+                                            </div>
+                                            <div class="navigation-buttons">
+                                                <div class="navigation-button" id="prevBtn"><i class="fas fa-angle-left"></i></div>
+                                                <div class="navigation-button" id="nextBtn"><i class="fas fa-angle-right"></i></div>
+                                            </div>
+
+                                            <div class="button-container">
+                                                <button id="savePreviewBtn" class="save-button primary">
+                                                    <i class="fa-solid fa-image"></i> Save Image
+                                                </button>
+                                                <button id="exportCSVBtn" class="save-button">
+                                                    <i class="fa-solid fa-floppy-disk"></i> Export as CSV
+                                                </button>  
+                                            </div>
+                                        </div>
+                                        
+                                            
+                                        <div class="tabPanel" id="x_profile">
+                                            <div class="subtab-action-buttons">
+                                                <div class="subtab-action-button active" id="meanBtnX"><i class="fa-solid fa-chart-bar"></i> Mean</div>
+                                                <div class="subtab-action-button" id="medianBtnX"><i class="fa-solid fa-balance-scale"></i> Median</div>
+                                            </div>
+                                            <!--div class="subtab-action-buttons">
+                                                <div class="subtab-action-button" id="commandXBtn">
+                                                    <img src="assets/icons/command.svg" data-modal="command.html" data-target-modal="commandModal" alt="command button" />
+                                                </div>
+                                                <div class="subtab-action-button" id="intensityXBtn">
+                                                    <img src="assets/icons/intensity.svg" alt="Intensity" />
+                                                </div>
+                                            </div -->
+                                            <!-- Intensity Window Selector UI (Initially Hidden) -->
+                                            <div class="card-slider-container">
+                                                <div id="xrangeSelectorContainer" class="range-selector">
+                                                    <label for="xrange_slider">
+                                                        <i class="fa-solid fa-arrows-alt-h"></i> Intensity Window:
+                                                    </label>
+                                                    
+                                                    <div class="slider-container">
+                                                        <div>
+                                                            <label for="xvalue-slider">Value</label>
+                                                            <input type="range" id="xvalue-slider" class="range-slider" min="0" max="100" value="50">
+                                                        </div>
+                                                        <div>
+                                                            <label for="xwindow-slider">Window Size</label>
+                                                            <input type="range" id="xwindow-slider" class="range-slider" min="0" max="100" value="20">
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="value-container">
+                                                        <span id="xvalue-value">50</span> - Window Size: <span id="xwindow-value">20</span>
+                                                    </div>
+                                                    
+                                                    <button id="applyXRangeBtn" class="apply-button">
+                                                        <i class="fa-solid fa-check"></i> Apply
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="image-container">
+                                                <img id="x_profile_plot" alt="X-Profile Plot" style="display:none;">
+                                                <div class="button-container">
+                                                    <button id="saveImageXProfileBtn" class="save-button primary">
+                                                        <i class="fa-solid fa-download"></i> Save Image
+                                                    </button>
+                                                    <button id="exportCSVXProfileBtn" class="save-button">
+                                                        <i class="fa-solid fa-floppy-disk"></i> Export as CSV
+                                                    </button>
+                                                </div>                                                
+                                            </div>
+                                        </div>
+                                        <div class="tabPanel" id="y_profile">
+                                            <div class="subtab-action-buttons">
+                                                <div class="subtab-action-button active" id="meanBtnY"><i class="fa-solid fa-chart-bar"></i> Mean</div>
+                                                <div class="subtab-action-button" id="medianBtnY"><i class="fa-solid fa-balance-scale"></i> Median</div>
+                                            </div>
+                                            
+                                            <!-- Range Selector UI (Initially Hidden) -->
+                                            <div class="card-slider-container">
+                                                <div id="yrangeSelectorContainer" class="range-selector">
+                                                    <label for="yrange_slider">
+                                                        <i class="fa-solid fa-arrows-alt-v"></i> Intensity Window:
+                                                    </label>
+                                                    
+                                                    <div class="slider-container">
+                                                        <div>
+                                                            <label for="yvalue-slider">Value</label>
+                                                            <input type="range" id="yvalue-slider" class="range-slider" min="0" max="100" value="50">
+                                                        </div>
+                                                        <div>
+                                                            <label for="ywindow-slider">Window Size</label>
+                                                            <input type="range" id="ywindow-slider" class="range-slider" min="0" max="100" value="20">
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="value-container">
+                                                        <span id="yvalue-value">50</span> - Window Size: <span id="ywindow-value">20</span>
+                                                    </div>
+                                                    
+                                                    <button id="applyYRangeBtn" class="apply-button">
+                                                        <i class="fa-solid fa-check"></i> Apply
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="image-container">
+                                                <img id="y_profile_plot" alt="Y-Profile Plot" style="display:none;">
+                                                <div class="button-container">
+                                                    <button id="saveImageYProfileBtn" class="save-button primary">
+                                                        <i class="fa-solid fa-download"></i> Save Image
+                                                    </button>
+                                                    <button id="exportCSVYProfileBtn" class="save-button">
+                                                        <i class="fa-solid fa-floppy-disk"></i> Export as CSV
+                                                    </button>
+                                                </div>
+                                                
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                                
+							</section>
+
+                        <!-- Introduction -->
+                            <section id="about" class="main special">
+                                <div class="spotlight">
+                                    <div class="content">
+                                        <header class="major">
+                                            <h2>About This Project</h2>
+                                        </header>
+                                        <p> This project was developed to simplify the analysis of Electron Energy Loss Spectroscopy (HREELS) data.
+
+                                        </p>
+                                        <ul class="actions">
+                                            <li><a href=# data-modal="about.html" data-target-modal="aboutModal" class="button">Learn More</a></li>
+                                        </ul>
+                                    </div>
+                                    <span class="image"><img src="images/pic01.jpg" alt="" /></span>
+                                </div>
+                            </section>
+						
+					</div>
+
+        <footer id="footer">
+            <section>
+                <h2>Support Us</h2>
+                <p>
+                    Your support helps us continue to provide this tool for free to researchers around the world. Whether it's through spreading the word, contributing code, or offering financial support, every bit helps us improve and expand this project. Join us in making SpectroscopeX more accessible and efficient for everyone.
+                </p>
+                <ul class="actions">
+                    <li><a href="#" data-modal="support.html" data-target-modal="supportModal" class="button">Learn More</a></li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>Get in Touch</h2>
+                <dl class="alt">
+                    <dt>Address</dt>
+                    <dd>2, 63 Busandaehak-ro, Geumjeong-gu, Busan &bull; Korea</dd>
+                    <dt>Email</dt>
+                    <dd><a href="mailto:hwang.sue.hyeon@gmail.com">hwang.sue.hyeon@gmail.com</a></dd>
+                </dl>
+                <ul class="icons">
+                    <li><a href="https://github.com/suecreamm" class="icon brands fa-github-alt alt"><span class="label">GitHub</span></a></li>
+                    <li><a href="#" class="icon brands fa-twitter alt"><span class="label">Twitter</span></a></li>
+                    <li><a href="#" class="icon brands fa-google-scholar alt"><span class="label">Google Scholar</span></a></li>
+                    <li><a href="#" class="icon brands fa-linkedin-in alt"><span class="label">LinkedIN</span></a></li>
+                </ul>    
+            </section>
+           
+            <p class="copyright"> &copy; Suecremm. All rights reserved. <a href="#" data-modal="license.html">License</a></p>
+        </footer>
+    </div>
+
+    <div id="loadingSpinner" class="loading-spinner">
+        <i class="fa-solid fa-circle-notch fa-spin"></i>
+    </div>
+
+    <!-- Scripts -->
+        <script src="assets/js/jquery.min.js"></script>
+        <script src="assets/js/jquery.scrolly.min.js"></script>
+        <script src="assets/js/jquery.scrollex.min.js"></script>
+        <script src="assets/js/browser.min.js"></script>
+        <script src="assets/js/breakpoints.min.js"></script>
+        <script src="assets/js/util.js"></script>
+        <script src="assets/js/main.js"></script>
+        <script type="module" src="src/js/index.js" defer></script>
+        <script src="assets/js/modal.js"></script>
+        <script type="module" src="assets/js/modalMessage.js"></script>
+    </body>
+</html>
