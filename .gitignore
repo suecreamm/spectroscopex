@@ -1,0 +1,76 @@
+# Node modules
+node_modules/
+npm-debug.log
+yarn-debug.log*
+yarn-error.log*
+
+# Logs
+logs/
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+
+# Electron build files
+dist/
+build/
+*.asar
+
+# Python cache and virtual environment
+__pycache__/
+*.py[cod]
+*.pyo
+env/
+venv/
+*.env
+Pipfile.lock
+.poetry/
+
+# Ignore Jupyter Notebook checkpoints (if used)
+.ipynb_checkpoints/
+
+# CSV, PKL, PNG files
+*.csv
+*.pkl
+*.png
+
+# IDEs and editors
+.vscode/
+.idea/
+
+# Misc
+*.swp
+*.swo
+
+# Coverage reports
+coverage/
+*.cover
+.hypothesis/
+*.hypothesis
+
+# Pytest cache
+.pytest_cache/
+
+# Build directories for Python
+build/
+dist/
+*.egg-info/
+
+# Compiled C extensions
+*.so
+
+# Environment variable files
+.env
+.env.*
+
+# SQLite database files
+*.db
+
+# Backup files
+*.bak
+*.orig

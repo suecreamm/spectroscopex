@@ -1,33 +1,38 @@
 export function initializeSliderHandler() {
     const xValueSlider = document.getElementById('xvalue-slider');
     const xWindowSlider = document.getElementById('xwindow-slider');
-    const xValueDisplay = document.getElementById('xvalue-value');
-    const xWindowDisplay = document.getElementById('xwindow-value');
+    const xValueInput = document.getElementById('xvalue-input');
+    const xWindowInput = document.getElementById('xwindow-input');
 
     const yValueSlider = document.getElementById('yvalue-slider');
     const yWindowSlider = document.getElementById('ywindow-slider');
-    const yValueDisplay = document.getElementById('yvalue-value');
-    const yWindowDisplay = document.getElementById('ywindow-value');
+    const yValueInput = document.getElementById('yvalue-input');
+    const yWindowInput = document.getElementById('ywindow-input');
 
-    if (!xValueSlider || !xWindowSlider || !xValueDisplay || !xWindowDisplay ||
-        !yValueSlider || !yWindowSlider || !yValueDisplay || !yWindowDisplay) {
-        console.error('Slider elements not found');
+    if (!xValueSlider || !xWindowSlider || !xValueInput || !xWindowInput ||
+        !yValueSlider || !yWindowSlider || !yValueInput || !yWindowInput) {
+        console.error('Slider or input elements not found');
         return;
     }
 
-    xValueSlider.addEventListener('input', function() {
-        xValueDisplay.textContent = xValueSlider.value;
-    });
+    function syncSliderAndInput(slider, input) {
+        slider.addEventListener('input', function() {
+            input.value = slider.value;
+        });
 
-    xWindowSlider.addEventListener('input', function() {
-        xWindowDisplay.textContent = xWindowSlider.value;
-    });
+        input.addEventListener('input', function() {
+            const value = parseInt(input.value);
+            if (!isNaN(value) && value >= parseInt(slider.min) && value <= parseInt(slider.max)) {
+                slider.value = value;
+            }
+        });
 
-    yValueSlider.addEventListener('input', function() {
-        yValueDisplay.textContent = yValueSlider.value;
-    });
+        input.value = slider.value;
+    }
 
-    yWindowSlider.addEventListener('input', function() {
-        yWindowDisplay.textContent = yWindowSlider.value;
-    });
+    syncSliderAndInput(xValueSlider, xValueInput);
+    syncSliderAndInput(xWindowSlider, xWindowInput);
+
+    syncSliderAndInput(yValueSlider, yValueInput);
+    syncSliderAndInput(yWindowSlider, yWindowInput);
 }
